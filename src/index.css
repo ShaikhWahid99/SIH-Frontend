@@ -17,117 +17,104 @@
 
 @layer base {
   :root {
-    /* Glass morphism background */
-    --background: 220 20% 97%;
-    --foreground: 220 15% 20%;
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
 
-    /* Glass card with transparency */
     --card: 0 0% 100%;
-    --card-foreground: 220 15% 20%;
+    --card-foreground: 222.2 84% 4.9%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 220 15% 20%;
+    --popover-foreground: 222.2 84% 4.9%;
 
-    /* Soft gradient primary colors */
-    --primary: 262 80% 60%;
+    /* Vibrant primary colors - Purple/Blue gradient theme */
+    --primary: 262 83% 58%;
     --primary-foreground: 0 0% 100%;
-    --primary-glow: 262 80% 70%;
+    --primary-glow: 262 83% 68%;
 
-    /* Soft cyan accent */
-    --secondary: 189 70% 50%;
+    /* Accent colors - Electric cyan */
+    --secondary: 189 94% 43%;
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 220 15% 94%;
-    --muted-foreground: 220 10% 50%;
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 9% 46%;
 
-    --accent: 280 70% 65%;
+    --accent: 280 100% 70%;
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 70% 60%;
+    --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 15% 88%;
-    --input: 220 15% 90%;
-    --ring: 262 80% 60%;
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 262 83% 58%;
 
-    --radius: 1rem;
+    --radius: 0.75rem;
     
-    /* Glass morphism specific */
-    --glass-bg: 0 0% 100%;
-    --glass-border: 220 15% 90%;
-    --glass-shadow: 220 15% 20%;
+    /* Custom gradient colors */
+    --gradient-start: 262 83% 58%;
+    --gradient-end: 189 94% 43%;
     
-    /* Gradient colors */
-    --gradient-start: 262 80% 60%;
-    --gradient-end: 189 70% 50%;
-    
-    /* Status colors */
-    --success: 142 65% 45%;
+    /* Success and info colors */
+    --success: 142 76% 36%;
     --success-foreground: 0 0% 100%;
-    --info: 199 75% 50%;
+    --info: 199 89% 48%;
     --info-foreground: 0 0% 100%;
 
-    /* Sidebar with glass effect */
-    --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 220 15% 25%;
-    --sidebar-primary: 262 80% 60%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 15% 96%;
-    --sidebar-accent-foreground: 220 15% 25%;
-    --sidebar-border: 220 15% 90%;
-    --sidebar-ring: 262 80% 60%;
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
   .dark {
-    --background: 220 20% 10%;
-    --foreground: 220 15% 95%;
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
 
-    --card: 220 20% 15%;
-    --card-foreground: 220 15% 95%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
 
-    --popover: 220 20% 15%;
-    --popover-foreground: 220 15% 95%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
 
-    --primary: 262 80% 65%;
+    --primary: 262 83% 58%;
     --primary-foreground: 0 0% 100%;
-    --primary-glow: 262 80% 75%;
+    --primary-glow: 262 83% 68%;
 
-    --secondary: 189 70% 55%;
+    --secondary: 189 94% 43%;
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 220 20% 20%;
-    --muted-foreground: 220 15% 70%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
 
-    --accent: 280 70% 70%;
+    --accent: 280 100% 70%;
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 70% 55%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
 
-    --border: 220 20% 25%;
-    --input: 220 20% 20%;
-    --ring: 262 80% 65%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 262 83% 58%;
     
-    --glass-bg: 220 20% 15%;
-    --glass-border: 220 20% 30%;
-    --glass-shadow: 220 20% 5%;
+    --gradient-start: 262 83% 58%;
+    --gradient-end: 189 94% 43%;
     
-    --gradient-start: 262 80% 65%;
-    --gradient-end: 189 70% 55%;
-    
-    --success: 142 65% 50%;
+    --success: 142 76% 36%;
     --success-foreground: 0 0% 100%;
-    --info: 199 75% 55%;
+    --info: 199 89% 48%;
     --info-foreground: 0 0% 100%;
-    
-    --sidebar-background: 220 20% 15%;
-    --sidebar-foreground: 220 15% 90%;
-    --sidebar-primary: 262 80% 65%;
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 20% 22%;
-    --sidebar-accent-foreground: 220 15% 90%;
-    --sidebar-border: 220 20% 25%;
-    --sidebar-ring: 262 80% 65%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
   }
 }
 
@@ -137,8 +124,7 @@
   }
 
   body {
-    @apply bg-gradient-to-br from-background via-muted/30 to-background font-sans antialiased;
-    background-attachment: fixed;
+    @apply bg-white text-black font-sans antialiased;
   }
 
   /* Smooth scrolling */
@@ -191,15 +177,7 @@
   }
 
   .glass-card {
-    @apply bg-card/40 backdrop-blur-xl border border-border/30 rounded-2xl shadow-[0_8px_32px_0_rgba(0,0,0,0.08)] transition-all duration-300 hover:shadow-[0_12px_48px_0_rgba(0,0,0,0.12)] hover:border-border/50;
-  }
-  
-  .glass-effect {
-    @apply bg-card/50 backdrop-blur-lg border border-border/40 shadow-[0_8px_32px_0_rgba(0,0,0,0.06)];
-  }
-  
-  .neomorph {
-    @apply bg-gradient-to-br from-card to-muted/30 shadow-[8px_8px_16px_rgba(0,0,0,0.08),-8px_-8px_16px_rgba(255,255,255,0.8)] dark:shadow-[8px_8px_16px_rgba(0,0,0,0.3),-8px_-8px_16px_rgba(255,255,255,0.05)];
+    @apply bg-white/70 backdrop-blur-sm border border-white/20 rounded-2xl shadow-elegant transition-all duration-300 hover:shadow-elegant-hover;
   }
 
   .feature-card {
