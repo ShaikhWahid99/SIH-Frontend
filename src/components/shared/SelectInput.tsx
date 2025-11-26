@@ -8,13 +8,14 @@ interface SelectInputProps {
   value?: string;
   onValueChange?: (value: string) => void;
   error?: string;
+  disabled?: boolean;
 }
 
-export const SelectInput = ({ label, placeholder, options, value, onValueChange, error }: SelectInputProps) => {
+export const SelectInput = ({ label, placeholder, options, value, onValueChange, error, disabled }: SelectInputProps) => {
   return (
     <div className="space-y-2">
       {label && <Label className="text-foreground">{label}</Label>}
-      <Select value={value} onValueChange={onValueChange}>
+      <Select value={value} onValueChange={onValueChange} disabled={disabled}>
         <SelectTrigger className={error ? 'border-destructive' : ''}>
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
