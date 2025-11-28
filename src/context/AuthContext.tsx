@@ -1,10 +1,16 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from "react";
 
 interface User {
   id: string;
   name: string;
   email: string;
-  role: 'learner';
+  role: "learner";
 }
 
 interface AuthContextType {
@@ -23,7 +29,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     // Check for saved user in localStorage
-    const savedUser = localStorage.getItem('user');
+    const savedUser = localStorage.getItem("user");
     if (savedUser) {
       setUser(JSON.parse(savedUser));
       setIsAuthenticated(true);
@@ -33,15 +39,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const login = async (email: string, password: string) => {
     // Dummy login - in real app, this would call an API
     const dummyUser: User = {
-      id: '1',
-      name: 'John Doe',
+      id: "1",
+      name: "John Doe",
       email,
-      role: 'learner',
+      role: "learner",
     };
-    
+
     setUser(dummyUser);
     setIsAuthenticated(true);
-    localStorage.setItem('user', JSON.stringify(dummyUser));
+    localStorage.setItem("user", JSON.stringify(dummyUser));
   };
 
   const register = async (name: string, email: string, password: string) => {
@@ -50,22 +56,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       id: Date.now().toString(),
       name,
       email,
-      role: 'learner',
+      role: "learner",
     };
-    
+
     setUser(newUser);
     setIsAuthenticated(true);
-    localStorage.setItem('user', JSON.stringify(newUser));
+    localStorage.setItem("user", JSON.stringify(newUser));
   };
 
   const logout = () => {
     setUser(null);
     setIsAuthenticated(false);
-    localStorage.removeItem('user');
+    localStorage.removeItem("user");
   };
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated, login, register, logout }}>
+    <AuthContext.Provider
+      value={{ user, isAuthenticated, login, register, logout }}
+    >
       {children}
     </AuthContext.Provider>
   );
@@ -74,7 +82,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 };

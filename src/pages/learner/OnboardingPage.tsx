@@ -1,15 +1,18 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Stepper } from '@/components/shared/Stepper';
-import { TextInput } from '@/components/shared/TextInput';
-import { SelectInput } from '@/components/shared/SelectInput';
-import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { useToast } from '@/hooks/use-toast';
-import { sectors, skills, qualifications, streams, careerAspirations, diagnosticQuestions } from '@/data/dummyData';
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import { useToast } from "@/hooks/use-toast";
+import { CheckCircle2, Circle } from "lucide-react";
+import {
+  sectors,
+  skills,
+  qualifications,
+  streams,
+  careerAspirations,
+} from "@/data/dummyData";
 
 const OnboardingPage = () => {
   const [currentStep, setCurrentStep] = useState(0);
@@ -18,29 +21,27 @@ const OnboardingPage = () => {
 
   // Form data
   const [formData, setFormData] = useState({
-    ageRange: '',
-    state: '',
-    district: '',
-    language: '',
-    qualification: '',
-    stream: '',
-    status: '',
+    ageRange: "",
+    state: "",
+    district: "",
+    language: "",
+    qualification: "",
+    stream: "",
+    status: "",
     selectedSkills: [] as string[],
     interests: [] as string[],
-    mode: '',
-    budget: '',
-    duration: '',
-    careerGoal: '',
+    mode: "",
+    budget: "",
+    duration: "",
+    careerGoal: "",
     quizAnswers: {} as Record<number, string>,
   });
 
   const steps = [
-    { label: 'Basic Details' },
-    { label: 'Education' },
-    { label: 'Skills' },
-    { label: 'Preferences' },
-    { label: 'Career Goals' },
-    { label: 'Diagnostic Quiz' },
+    { label: "Basic Details", description: "Tell us about yourself" },
+    { label: "Education", description: "Your educational background" },
+    { label: "Skills", description: "Your skills and interests" },
+    { label: "Career Goals", description: "Where you want to go" },
   ];
 
   const handleNext = () => {
@@ -57,15 +58,23 @@ const OnboardingPage = () => {
     }
   };
 
-  const handleSubmit = () => {
+  // In OnboardingPage.tsx - replace the handleSubmit function
+const handleSubmit = () => {
+  try {
     // Save to localStorage
-    localStorage.setItem('onboardingData', JSON.stringify(formData));
+    localStorage.setItem("onboardingData", JSON.stringify(formData));
+
     toast({
-      title: 'Profile Complete!',
-      description: 'Your personalized pathways are being generated...',
+      title: "Basic Profile Complete!",
+      description: "Now let's understand your learning preferences...",
     });
-    navigate('/learner/dashboard');
-  };
+  } catch (error) {
+    console.error("Onboarding submit error", error);
+  } finally {
+    // Navigate to quiz instead of dashboard
+    navigate("/quiz");
+  }
+};
 
   const toggleSkill = (skill: string) => {
     setFormData({
@@ -85,226 +94,336 @@ const OnboardingPage = () => {
     });
   };
 
+  const updateField = (field: string, value: string) => {
+    setFormData({ ...formData, [field]: value });
+  };
+
   return (
-    <div className="min-h-screen py-12 px-4 bg-gradient-to-br from-primary/5 via-background to-secondary/5">
-      <div className="max-w-4xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 py-8 px-4">
+      <div className="max-w-5xl mx-auto">
+        {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2">
-            Let's Build Your Learning Profile
+          <h1 className="text-4xl font-bold text-gray-900 mb-3">
+            Build Your Learning Profile
           </h1>
-          <p className="text-muted-foreground">
-            This will help us create the perfect learning path for you
-          </p>
+          {/* <p className="text-lg text-gray-600">
+            Help us create the perfect learning path for your goals
+          </p> */}
         </div>
 
-        <Card className="p-8">
-          <Stepper steps={steps} currentStep={currentStep} />
-
-          <div className="mt-8 min-h-[400px]">
-            {/* Step 1: Basic Details */}
-            {currentStep === 0 && (
-              <div className="space-y-6">
-                <h2 className="text-2xl font-bold text-foreground mb-4">Basic Details</h2>
-                <SelectInput
-                  label="Age Range"
-                  placeholder="Select your age range"
-                  options={['Under 18', '18-25', '26-35', '36-45', '46+']}
-                  value={formData.ageRange}
-                  onValueChange={(value) => setFormData({ ...formData, ageRange: value })}
-                />
-                <TextInput
-                  label="State"
-                  placeholder="Enter your state"
-                  value={formData.state}
-                  onChange={(e) => setFormData({ ...formData, state: e.target.value })}
-                />
-                <TextInput
-                  label="District"
-                  placeholder="Enter your district"
-                  value={formData.district}
-                  onChange={(e) => setFormData({ ...formData, district: e.target.value })}
-                />
-                <SelectInput
-                  label="Preferred Language"
-                  placeholder="Select language"
-                  options={['English', 'Hindi', 'Tamil', 'Telugu', 'Bengali', 'Marathi']}
-                  value={formData.language}
-                  onValueChange={(value) => setFormData({ ...formData, language: value })}
-                />
-              </div>
-            )}
-
-            {/* Step 2: Education Background */}
-            {currentStep === 1 && (
-              <div className="space-y-6">
-                <h2 className="text-2xl font-bold text-foreground mb-4">Education Background</h2>
-                <SelectInput
-                  label="Highest Qualification"
-                  placeholder="Select qualification"
-                  options={qualifications}
-                  value={formData.qualification}
-                  onValueChange={(value) => setFormData({ ...formData, qualification: value })}
-                />
-                <SelectInput
-                  label="Stream"
-                  placeholder="Select stream"
-                  options={streams}
-                  value={formData.stream}
-                  onValueChange={(value) => setFormData({ ...formData, stream: value })}
-                />
-                <SelectInput
-                  label="Current Status"
-                  placeholder="Select status"
-                  options={['Student', 'Working Professional', 'Job Seeker', 'Freelancer']}
-                  value={formData.status}
-                  onValueChange={(value) => setFormData({ ...formData, status: value })}
-                />
-              </div>
-            )}
-
-            {/* Step 3: Skills & Interests */}
-            {currentStep === 2 && (
-              <div className="space-y-6">
-                <h2 className="text-2xl font-bold text-foreground mb-4">Skills & Interests</h2>
-                <div>
-                  <Label className="text-base mb-3 block">Select your current skills</Label>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                    {skills.map((skill) => (
-                      <div key={skill} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={skill}
-                          checked={formData.selectedSkills.includes(skill)}
-                          onCheckedChange={() => toggleSkill(skill)}
-                        />
-                        <label htmlFor={skill} className="text-sm cursor-pointer">
-                          {skill}
-                        </label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                <div>
-                  <Label className="text-base mb-3 block">Select your interest sectors</Label>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                    {sectors.map((sector) => (
-                      <div key={sector} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={sector}
-                          checked={formData.interests.includes(sector)}
-                          onCheckedChange={() => toggleInterest(sector)}
-                        />
-                        <label htmlFor={sector} className="text-sm cursor-pointer">
-                          {sector}
-                        </label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Step 4: Preferences */}
-            {currentStep === 3 && (
-              <div className="space-y-6">
-                <h2 className="text-2xl font-bold text-foreground mb-4">Learning Preferences</h2>
-                <div>
-                  <Label className="text-base mb-3 block">Preferred Mode</Label>
-                  <RadioGroup value={formData.mode} onValueChange={(value) => setFormData({ ...formData, mode: value })}>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="online" id="online" />
-                      <Label htmlFor="online" className="cursor-pointer">Online</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="offline" id="offline" />
-                      <Label htmlFor="offline" className="cursor-pointer">Offline</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="hybrid" id="hybrid" />
-                      <Label htmlFor="hybrid" className="cursor-pointer">Hybrid</Label>
-                    </div>
-                  </RadioGroup>
-                </div>
-                <SelectInput
-                  label="Budget Range (per month)"
-                  placeholder="Select budget"
-                  options={['Free', 'Under ₹5,000', '₹5,000 - ₹15,000', '₹15,000 - ₹30,000', 'Above ₹30,000']}
-                  value={formData.budget}
-                  onValueChange={(value) => setFormData({ ...formData, budget: value })}
-                />
-                <SelectInput
-                  label="Preferred Duration"
-                  placeholder="Select duration"
-                  options={['1-3 months', '3-6 months', '6-12 months', '1+ year']}
-                  value={formData.duration}
-                  onValueChange={(value) => setFormData({ ...formData, duration: value })}
-                />
-              </div>
-            )}
-
-            {/* Step 5: Career Goals */}
-            {currentStep === 4 && (
-              <div className="space-y-6">
-                <h2 className="text-2xl font-bold text-foreground mb-4">Career Goals</h2>
-                <SelectInput
-                  label="What is your career aspiration?"
-                  placeholder="Select career goal"
-                  options={careerAspirations}
-                  value={formData.careerGoal}
-                  onValueChange={(value) => setFormData({ ...formData, careerGoal: value })}
-                />
-                <div className="bg-muted/50 p-6 rounded-lg">
-                  <h3 className="font-semibold text-foreground mb-2">Why this matters</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Your career aspiration helps us recommend pathways that align with your long-term goals 
-                    and ensure you develop the right skills for your desired career.
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {/* Step 6: Diagnostic Quiz */}
-            {currentStep === 5 && (
-              <div className="space-y-6">
-                <h2 className="text-2xl font-bold text-foreground mb-4">Quick Assessment</h2>
-                <p className="text-muted-foreground mb-6">
-                  Answer these questions to help us understand your learning style and preferences better
-                </p>
-                {diagnosticQuestions.map((q) => (
-                  <Card key={q.id} className="p-4">
-                    <Label className="text-base font-medium mb-3 block">{q.question}</Label>
-                    <RadioGroup
-                      value={formData.quizAnswers[q.id]}
-                      onValueChange={(value) =>
-                        setFormData({
-                          ...formData,
-                          quizAnswers: { ...formData.quizAnswers, [q.id]: value },
-                        })
-                      }
-                    >
-                      {q.options.map((option, idx) => (
-                        <div key={idx} className="flex items-center space-x-2">
-                          <RadioGroupItem value={option} id={`q${q.id}-${idx}`} />
-                          <Label htmlFor={`q${q.id}-${idx}`} className="cursor-pointer">
-                            {option}
-                          </Label>
+        <div className="grid lg:grid-cols-4 gap-6">
+          {/* Sidebar Stepper */}
+          <div className="lg:col-span-1">
+            <Card className="p-6 sticky top-4">
+              <h3 className="font-semibold text-gray-900 mb-4">Progress</h3>
+              <div className="space-y-4">
+                {steps.map((step, index) => (
+                  <div
+                    key={index}
+                    className={`flex items-start gap-3 transition-all ${
+                      index === currentStep ? "scale-105" : ""
+                    }`}
+                  >
+                    <div className="flex-shrink-0 mt-0.5">
+                      {index < currentStep ? (
+                        <CheckCircle2 className="w-6 h-6 text-green-500" />
+                      ) : index === currentStep ? (
+                        <div className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center">
+                          <div className="w-2 h-2 rounded-full bg-white" />
                         </div>
-                      ))}
-                    </RadioGroup>
-                  </Card>
+                      ) : (
+                        <Circle className="w-6 h-6 text-gray-300" />
+                      )}
+                    </div>
+                    <div>
+                      <p
+                        className={`font-medium text-sm ${
+                          index === currentStep
+                            ? "text-blue-600"
+                            : index < currentStep
+                            ? "text-green-600"
+                            : "text-gray-400"
+                        }`}
+                      >
+                        {step.label}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-0.5">
+                        {step.description}
+                      </p>
+                    </div>
+                  </div>
                 ))}
               </div>
-            )}
+            </Card>
           </div>
 
-          <div className="flex justify-between mt-8 pt-6 border-t border-border">
-            <Button variant="outline" onClick={handleBack} disabled={currentStep === 0}>
-              Back
-            </Button>
-            <Button onClick={handleNext}>
-              {currentStep === steps.length - 1 ? 'Complete' : 'Next'}
-            </Button>
+          {/* Main Content */}
+          <div className="lg:col-span-3">
+            <Card className="p-8 shadow-lg">
+              <div className="mb-6">
+                <div className="flex items-center justify-between mb-2">
+                  <h2 className="text-2xl font-bold text-gray-900">
+                    {steps[currentStep].label}
+                  </h2>
+                  <span className="text-sm text-gray-500">
+                    Step {currentStep + 1} of {steps.length}
+                  </span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div
+                    className="bg-blue-500 h-2 rounded-full transition-all duration-300"
+                    style={{
+                      width: `${((currentStep + 1) / steps.length) * 100}%`,
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div className="min-h-[250px]">
+                {/* Step 1: Basic Details */}
+                {currentStep === 0 && (
+                  <div className="space-y-5">
+                    <div className="grid md:grid-cols-2 gap-5">
+                      <div>
+                        <Label className="text-sm font-medium mb-2 block">
+                          Age Range
+                        </Label>
+                        <select
+                          className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          value={formData.ageRange}
+                          onChange={(e) =>
+                            updateField("ageRange", e.target.value)
+                          }
+                        >
+                          <option value="">Select your age range</option>
+                          <option value="Under 18">Under 18</option>
+                          <option value="18-25">18-25</option>
+                          <option value="26-35">26-35</option>
+                          <option value="36-45">36-45</option>
+                          <option value="46+">46+</option>
+                        </select>
+                      </div>
+                      <div>
+                        <Label className="text-sm font-medium mb-2 block">
+                          Preferred Language
+                        </Label>
+                        <select
+                          className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          value={formData.language}
+                          onChange={(e) =>
+                            updateField("language", e.target.value)
+                          }
+                        >
+                          <option value="">Select language</option>
+                          <option value="English">English</option>
+                          <option value="Hindi">Hindi</option>
+                          <option value="Tamil">Tamil</option>
+                          <option value="Telugu">Telugu</option>
+                          <option value="Bengali">Bengali</option>
+                          <option value="Marathi">Marathi</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div className="grid md:grid-cols-2 gap-5">
+                      <div>
+                        <Label className="text-sm font-medium mb-2 block">
+                          State
+                        </Label>
+                        <input
+                          type="text"
+                          placeholder="Enter your state"
+                          className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          value={formData.state}
+                          onChange={(e) => updateField("state", e.target.value)}
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-sm font-medium mb-2 block">
+                          District
+                        </Label>
+                        <input
+                          type="text"
+                          placeholder="Enter your district"
+                          className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          value={formData.district}
+                          onChange={(e) =>
+                            updateField("district", e.target.value)
+                          }
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Step 2: Education Background */}
+                {currentStep === 1 && (
+                  <div className="space-y-5">
+                    <div>
+                      <Label className="text-sm font-medium mb-2 block">
+                        Highest Qualification
+                      </Label>
+                      <select
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        value={formData.qualification}
+                        onChange={(e) =>
+                          updateField("qualification", e.target.value)
+                        }
+                      >
+                        <option value="">Select qualification</option>
+                        {qualifications.map((qual) => (
+                          <option key={qual} value={qual}>
+                            {qual}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium mb-2 block">
+                        Stream
+                      </Label>
+                      <select
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        value={formData.stream}
+                        onChange={(e) => updateField("stream", e.target.value)}
+                      >
+                        <option value="">Select stream</option>
+                        {streams.map((stream) => (
+                          <option key={stream} value={stream}>
+                            {stream}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium mb-2 block">
+                        Current Status
+                      </Label>
+                      <select
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        value={formData.status}
+                        onChange={(e) => updateField("status", e.target.value)}
+                      >
+                        <option value="">Select status</option>
+                        <option value="Student">Student</option>
+                        <option value="Working Professional">
+                          Working Professional
+                        </option>
+                        <option value="Job Seeker">Job Seeker</option>
+                        <option value="Freelancer">Freelancer</option>
+                      </select>
+                    </div>
+                  </div>
+                )}
+
+                {/* Step 3: Skills & Interests */}
+                {currentStep === 2 && (
+                  <div className="space-y-6">
+                    <div>
+                      <Label className="text-base font-semibold mb-3 block">
+                        Your Current Skills
+                      </Label>
+                      <div className="grid grid-cols-2 gap-3">
+                        {skills.map((skill) => (
+                          <div
+                            key={skill}
+                            className="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                          >
+                            <Checkbox
+                              id={skill}
+                              checked={formData.selectedSkills.includes(skill)}
+                              onCheckedChange={() => toggleSkill(skill)}
+                            />
+                            <label
+                              htmlFor={skill}
+                              className="text-sm cursor-pointer flex-1"
+                            >
+                              {skill}
+                            </label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <Label className="text-base font-semibold mb-3 block">
+                        Interest Sectors
+                      </Label>
+                      <div className="grid grid-cols-2 gap-3">
+                        {sectors.map((sector) => (
+                          <div
+                            key={sector}
+                            className="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                          >
+                            <Checkbox
+                              id={sector}
+                              checked={formData.interests.includes(sector)}
+                              onCheckedChange={() => toggleInterest(sector)}
+                            />
+                            <label
+                              htmlFor={sector}
+                              className="text-sm cursor-pointer flex-1"
+                            >
+                              {sector}
+                            </label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Step 4: Career Goals */}
+                {currentStep === 3 && (
+                  <div className="space-y-5">
+                    <div>
+                      <Label className="text-sm font-medium mb-2 block">
+                        What is your career aspiration?
+                      </Label>
+                      <select
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        value={formData.careerGoal}
+                        onChange={(e) =>
+                          updateField("careerGoal", e.target.value)
+                        }
+                      >
+                        <option value="">Select career goal</option>
+                        {careerAspirations.map((aspiration) => (
+                          <option key={aspiration} value={aspiration}>
+                            {aspiration}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="bg-blue-50 border border-blue-200 p-6 rounded-lg">
+                      <h3 className="font-semibold text-blue-900 mb-2 flex items-center gap-2">
+                        <span className="text-xl">💡</span>
+                        Why this matters
+                      </h3>
+                      <p className="text-sm text-blue-800">
+                        Your career aspiration helps us recommend pathways that
+                        align with your long-term goals and ensure you develop
+                        the right skills for your desired career.
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Navigation Buttons */}
+              <div className="flex justify-between mt-8 pt-6 border-t border-gray-200">
+                <Button
+                  variant="outline"
+                  onClick={handleBack}
+                  disabled={currentStep === 0}
+                >
+                  Back
+                </Button>
+                <Button onClick={handleNext}>
+                  {currentStep === steps.length - 1 ? "Complete" : "Next"}
+                </Button>
+              </div>
+            </Card>
           </div>
-        </Card>
+        </div>
       </div>
     </div>
   );

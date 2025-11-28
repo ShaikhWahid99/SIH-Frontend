@@ -20,6 +20,7 @@ import ProfilePage from "./pages/learner/ProfilePage";
 import ProgressPage from "./pages/learner/ProgressPage";
 import FeedbackPage from "./pages/learner/FeedbackPage";
 import NotFound from "./pages/NotFound";
+import QuizPage from "./pages/learner/QuizPage";
 
 const queryClient = new QueryClient();
 
@@ -36,6 +37,7 @@ const App = () => (
             <Route path="/auth/login" element={<AuthLayout><LoginPage /></AuthLayout>} />
             <Route path="/auth/register" element={<AuthLayout><RegisterPage /></AuthLayout>} />
             <Route path="/onboarding" element={<OnboardingPage />} />
+            <Route path="/quiz" element={<QuizPage />} />
             <Route path="/learner/dashboard" element={<LearnerLayout><DashboardPage /></LearnerLayout>} />
             <Route path="/learner/pathways" element={<LearnerLayout><PathwayListPage /></LearnerLayout>} />
             <Route path="/learner/pathways/:id" element={<LearnerLayout><PathwayDetailPage /></LearnerLayout>} />
