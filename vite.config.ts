@@ -18,5 +18,9 @@ export default defineConfig(({ mode }) => ({
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
+    proxy:{
+      '/api':'http://localhost:5000',
+      '/auth': 'http://localhost:5000'
+    }
   },
 }));

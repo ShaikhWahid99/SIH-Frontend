@@ -31,12 +31,12 @@ const RegisterPage = () => {
     setLoading(true);
 
     try {
-      await register(name, email, password);
+      await register({ name, email, password });
       toast({
         title: "Account created!",
         description: "Welcome to LearnPath AI. Let's set up your profile.",
       });
-      navigate("/onboarding");
+      navigate("/auth/login");
     } catch (error) {
       toast({
         title: "Registration failed",

@@ -19,6 +19,8 @@ import {
   Compass,
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
+import { api } from "@/lib/api";
+import { useAuth } from "@/context/AuthContext";
 
 type QuizCategory = "learning" | "motivation" | "preferences" | "goals";
 
@@ -73,7 +75,7 @@ const quizQuestions: QuizQuestion[] = [
       "Very urgent – I need results in 1–3 months",
       "Moderately urgent – 3–6 months",
       "Long term – 6–12 months or more",
-      "I’m exploring with no fixed timeline",
+      "I'm exploring with no fixed timeline",
     ],
   },
   {
@@ -96,10 +98,10 @@ const quizQuestions: QuizQuestion[] = [
     category: "motivation",
     icon: <Brain className="w-6 h-6" />,
     options: [
-      "I’m okay with slow progress if I deeply understand",
+      "I'm okay with slow progress if I deeply understand",
       "I want fast visible results, even if not perfect",
       "I prefer a balance of speed and depth",
-      "I’m still figuring out what works for me",
+      "I'm still figuring out what works for me",
     ],
   },
 
@@ -153,7 +155,7 @@ const quizQuestions: QuizQuestion[] = [
       "Fully focused solo, no distractions",
       "With a friend/accountability partner",
       "In a group/community setting",
-      "Doesn’t matter, I adapt to both",
+      "Doesn't matter, I adapt to both",
     ],
   },
   {
@@ -207,7 +209,7 @@ const quizQuestions: QuizQuestion[] = [
       "Just enough to be job-ready quickly",
       "Deep understanding of fewer topics",
       "Breadth first, then depth later",
-      "I’m not sure yet, I want guidance",
+      "I'm not sure yet, I want guidance",
     ],
   },
   {
@@ -234,7 +236,7 @@ const quizQuestions: QuizQuestion[] = [
       "Very important – they are a key priority",
       "Somewhat important – nice to have",
       "Not important – skills and projects matter more",
-      "I’m not sure, I need guidance here",
+      "I'm not sure, I need guidance here",
     ],
   },
 
@@ -301,7 +303,7 @@ const quizQuestions: QuizQuestion[] = [
       "I prefer learning solo most of the time",
       "I like occasional group activities",
       "I love community-based learning",
-      "I’m open to trying group learning",
+      "I'm open to trying group learning",
     ],
   },
 ];
@@ -347,6 +349,9 @@ const QuizPage = () => {
 
   const navigate = useNavigate();
   const { toast } = useToast();
+  
+  // FRIEND'S FEATURE: Backend integration
+  const { refreshUser } = useAuth();
 
   const currentQuestionData = quizQuestions[currentQuestion];
   const progressPercentage =
@@ -357,7 +362,6 @@ const QuizPage = () => {
 
   const handleAnswer = (answer: string) => {
     const q = quizQuestions[currentQuestion];
-    // all single-choice now
     setAnswers((prev) => ({
       ...prev,
       [q.id]: answer,
@@ -388,6 +392,7 @@ const QuizPage = () => {
     setCurrentQuestion(index);
   };
 
+  // MERGED: Backend submission (friend's) + localStorage fallback (yours)
   const handleSubmit = async () => {
     setIsSubmitting(true);
 
@@ -404,10 +409,19 @@ const QuizPage = () => {
         profileCompletedAt: new Date().toISOString(),
       };
 
-      localStorage.setItem(
-        "userProfile",
-        JSON.stringify(completeProfileData)
-      );
+      // FRIEND'S FEATURE: Save to backend
+      try {
+        await api.postMe(completeProfileData);
+        await refreshUser();
+        localStorage.removeItem("onboardingData");
+      } catch (apiError) {
+        console.error("API submission failed, saving locally:", apiError);
+        // Fallback to localStorage if API fails
+        localStorage.setItem(
+          "userProfile",
+          JSON.stringify(completeProfileData)
+        );
+      }
 
       await new Promise((resolve) => setTimeout(resolve, 1500));
 
@@ -417,7 +431,7 @@ const QuizPage = () => {
           "Your personalized learning path is being generated...",
       });
 
-      navigate("/learner/dashboard");
+      navigate("/learner/dashboard", { replace: true });
     } catch (error) {
       console.error("Quiz submission error:", error);
       toast({
@@ -483,7 +497,7 @@ const QuizPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 py-6 px-4">
-      {/* Welcome Popup */}
+      {/* YOUR FEATURE: Enhanced Welcome Popup */}
       {showWelcomePopup && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <Card className="max-w-md w-full p-8 shadow-xl border-0 bg-white">
@@ -564,7 +578,7 @@ const QuizPage = () => {
           showWelcomePopup ? "blur-sm pointer-events-none" : ""
         }`}
       >
-        {/* Top header + linear progress (cleaner, like modern tests) */}
+        {/* YOUR FEATURE: Modern progress header */}
         <div className="mb-10 space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -594,13 +608,12 @@ const QuizPage = () => {
         </div>
 
         <div className="grid lg:grid-cols-[260px,1fr] gap-8 items-start">
-          {/* Left: compact progress & navigation */}
+          {/* YOUR FEATURE: Enhanced sidebar with question navigation */}
           <Card className="p-5 bg-white/80 border-slate-200 shadow-sm sticky top-6 self-start">
             <h3 className="font-semibold text-gray-900 mb-4 text-sm">
               Overview
             </h3>
 
-            {/* Category pill */}
             <div className="mb-4">
               <div
                 className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium ${categoryColors[currentQuestionData.category]}`}
@@ -610,7 +623,6 @@ const QuizPage = () => {
               </div>
             </div>
 
-            {/* Circle progress */}
             <div className="flex flex-col items-center mb-6">
               <div className="relative w-28 h-28 mb-2">
                 <svg
@@ -656,7 +668,6 @@ const QuizPage = () => {
               </p>
             </div>
 
-            {/* Question bullets */}
             <div className="space-y-2 max-h-[260px] overflow-y-auto pr-1">
               <h4 className="text-xs font-medium text-slate-500 uppercase">
                 Questions
@@ -687,7 +698,7 @@ const QuizPage = () => {
             </div>
           </Card>
 
-          {/* Right: main animated question card */}
+          {/* YOUR FEATURE: Animated question card */}
           <Card className="p-6 md:p-8 bg-white border-slate-200 shadow-sm">
             <AnimatePresence mode="wait" custom={direction}>
               <motion.div
@@ -700,7 +711,6 @@ const QuizPage = () => {
                 transition={{ duration: 0.35, ease: "easeOut" }}
                 className="space-y-8"
               >
-                {/* Question header */}
                 <div className="space-y-3">
                   <div className="flex items-center justify-between gap-4">
                     <div className="flex items-center gap-3">
@@ -728,12 +738,10 @@ const QuizPage = () => {
                   </p>
                 </div>
 
-                {/* Options */}
                 <div className="min-h-[220px]">
                   {renderOptions(currentQuestionData)}
                 </div>
 
-                {/* Footer navigation */}
                 <div className="flex items-center justify-between pt-6 border-t border-slate-200">
                   <Button
                     variant="outline"

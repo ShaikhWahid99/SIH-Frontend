@@ -13,28 +13,58 @@ import {
   streams,
   careerAspirations,
 } from "@/data/dummyData";
+import { api } from "@/lib/api";
+import { useAuth } from "@/context/AuthContext";
+
+type FormDataType = {
+  ageRange: string;
+  state: string;
+  district: string;
+  language: string;
+  qualification: string;
+  stream: string;
+  status: string;
+  selectedSkills: string[];
+  interests: string[];
+  mode: string;
+  budget: string;
+  duration: string;
+  careerGoal: string;
+  quizAnswers: Record<number, string>;
+};
+
+const initialForm: FormDataType = {
+  ageRange: "",
+  state: "",
+  district: "",
+  language: "",
+  qualification: "",
+  stream: "",
+  status: "",
+  selectedSkills: [],
+  interests: [],
+  mode: "",
+  budget: "",
+  duration: "",
+  careerGoal: "",
+  quizAnswers: {},
+};
 
 const OnboardingPage = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user, refreshUser } = useAuth() as any; // refreshUser may or may not exist depending on your AuthContext
+  const [saving, setSaving] = useState(false);
 
-  // Form data
-  const [formData, setFormData] = useState({
-    ageRange: "",
-    state: "",
-    district: "",
-    language: "",
-    qualification: "",
-    stream: "",
-    status: "",
-    selectedSkills: [] as string[],
-    interests: [] as string[],
-    mode: "",
-    budget: "",
-    duration: "",
-    careerGoal: "",
-    quizAnswers: {} as Record<number, string>,
+  // Form data (hydrate from localStorage)
+  const [formData, setFormData] = useState<FormDataType>(() => {
+    try {
+      const raw = localStorage.getItem("onboardingData");
+      return raw ? (JSON.parse(raw) as FormDataType) : initialForm;
+    } catch {
+      return initialForm;
+    }
   });
 
   const steps = [
@@ -44,58 +74,172 @@ const OnboardingPage = () => {
     { label: "Career Goals", description: "Where you want to go" },
   ];
 
-  const handleNext = () => {
+  const persist = (next: FormDataType) => {
+    try {
+      localStorage.setItem("onboardingData", JSON.stringify(next));
+    } catch {}
+  };
+
+  const updateField = (field: keyof FormDataType, value: any) => {
+    setFormData((s) => {
+      const next = { ...s, [field]: value };
+      persist(next);
+      return next;
+    });
+  };
+
+  // toggle helpers: accept optional `checked` value or toggle based on current state
+  const toggleSkill = (skill: string, checked?: boolean) => {
+    setFormData((s) => {
+      const has = s.selectedSkills.includes(skill);
+      const willSelect = typeof checked === "boolean" ? checked : !has;
+      const selected = willSelect
+        ? Array.from(new Set([...s.selectedSkills, skill]))
+        : s.selectedSkills.filter((x) => x !== skill);
+      const next = { ...s, selectedSkills: selected };
+      persist(next);
+      return next;
+    });
+  };
+
+  const toggleInterest = (interest: string, checked?: boolean) => {
+    setFormData((s) => {
+      const has = s.interests.includes(interest);
+      const willSelect = typeof checked === "boolean" ? checked : !has;
+      const selected = willSelect
+        ? Array.from(new Set([...s.interests, interest]))
+        : s.interests.filter((x) => x !== interest);
+      const next = { ...s, interests: selected };
+      persist(next);
+      return next;
+    });
+  };
+
+  const validateStep = (stepIndex: number) => {
+    if (stepIndex === 0) {
+      return (
+        !!formData.ageRange &&
+        !!formData.language &&
+        !!formData.state &&
+        !!formData.district
+      );
+    }
+    if (stepIndex === 1) {
+      return (
+        !!formData.qualification && !!formData.stream && !!formData.status
+      );
+    }
+    if (stepIndex === 2) {
+      return (
+        formData.selectedSkills.length > 0 || formData.interests.length > 0
+      );
+    }
+    if (stepIndex === 3) {
+      return !!formData.careerGoal;
+    }
+    return true;
+  };
+
+  // Map frontend formData to backend expected UserDetails shape
+  const buildPayloadForApi = (data: FormDataType) => {
+    return {
+      ageRange: data.ageRange || undefined,
+      preferredLanguage: data.language || undefined,
+      state: data.state || undefined,
+      district: data.district || undefined,
+      education: {
+        highestQualification: data.qualification || undefined,
+        stream: data.stream || undefined,
+        status: data.status || undefined,
+      },
+      skills: Array.isArray(data.selectedSkills) ? data.selectedSkills : [],
+      interestSectors: Array.isArray(data.interests) ? data.interests : [],
+      careerGoal: data.careerGoal || undefined,
+      // other optional fields (mode, budget, duration, quizAnswers) if supported
+      mode: data.mode || undefined,
+      budget: data.budget || undefined,
+      duration: data.duration || undefined,
+      quizAnswers:
+        data.quizAnswers && Object.keys(data.quizAnswers).length > 0
+          ? data.quizAnswers
+          : undefined,
+    };
+  };
+
+const handleSubmit = async () => {
+  setSaving(true);
+  try {
+    const payload = buildPayloadForApi(formData);
+
+    // send onboarding to server
+    await api.postMe(payload);
+    await refreshUser(
+    navigate("/quiz", {replace: true})
+    )
+
+    // refresh auth state so user.userDetails is updated before navigation
+    try {
+      await refreshUser();
+    } catch (refreshErr) {
+      console.error("refreshUser failed after onboarding save", refreshErr);
+      toast({
+        title: "Profile saved but update failed",
+        description:
+          "Profile was saved on the server but we couldn't update your session. Please refresh the page or log in again.",
+        variant: "destructive",
+      });
+      return; // do not navigate — require a successful refresh
+    }
+
+    // clear local draft now that it's saved and client state is fresh
+    try {
+      localStorage.removeItem("onboardingData");
+    } catch (e) {
+      // ignore localStorage errors
+    }
+
+    toast({
+      title: "Profile saved",
+      description: "Proceeding to the quiz...",
+    });
+
+    navigate("/quiz", { replace: true });
+  } catch (err: any) {
+    console.error("Onboarding submit error", err);
+    toast({
+      title: "Save failed",
+      description:
+        err?.payload?.message || err?.message || "Could not save profile. Try again.",
+      variant: "destructive",
+    });
+  } finally {
+    setSaving(false);
+  }
+};
+
+
+  const handleNext = async () => {
+    if (!validateStep(currentStep)) {
+      toast({
+        title: "Complete required fields",
+        description: "Please fill the required fields before continuing.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (currentStep < steps.length - 1) {
-      setCurrentStep(currentStep + 1);
+      setCurrentStep((c) => c + 1);
+      window.scrollTo({ top: 0, behavior: "smooth" });
     } else {
-      handleSubmit();
+      await handleSubmit();
     }
   };
 
   const handleBack = () => {
     if (currentStep > 0) {
-      setCurrentStep(currentStep - 1);
+      setCurrentStep((c) => c - 1);
     }
-  };
-
-  // In OnboardingPage.tsx - replace the handleSubmit function
-const handleSubmit = () => {
-  try {
-    // Save to localStorage
-    localStorage.setItem("onboardingData", JSON.stringify(formData));
-
-    toast({
-      title: "Basic Profile Complete!",
-      description: "Now let's understand your learning preferences...",
-    });
-  } catch (error) {
-    console.error("Onboarding submit error", error);
-  } finally {
-    // Navigate to quiz instead of dashboard
-    navigate("/quiz");
-  }
-};
-
-  const toggleSkill = (skill: string) => {
-    setFormData({
-      ...formData,
-      selectedSkills: formData.selectedSkills.includes(skill)
-        ? formData.selectedSkills.filter((s) => s !== skill)
-        : [...formData.selectedSkills, skill],
-    });
-  };
-
-  const toggleInterest = (interest: string) => {
-    setFormData({
-      ...formData,
-      interests: formData.interests.includes(interest)
-        ? formData.interests.filter((i) => i !== interest)
-        : [...formData.interests, interest],
-    });
-  };
-
-  const updateField = (field: string, value: string) => {
-    setFormData({ ...formData, [field]: value });
   };
 
   return (
@@ -106,9 +250,6 @@ const handleSubmit = () => {
           <h1 className="text-4xl font-bold text-gray-900 mb-3">
             Build Your Learning Profile
           </h1>
-          {/* <p className="text-lg text-gray-600">
-            Help us create the perfect learning path for your goals
-          </p> */}
         </div>
 
         <div className="grid lg:grid-cols-4 gap-6">
@@ -191,9 +332,7 @@ const handleSubmit = () => {
                         <select
                           className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                           value={formData.ageRange}
-                          onChange={(e) =>
-                            updateField("ageRange", e.target.value)
-                          }
+                          onChange={(e) => updateField("ageRange", e.target.value)}
                         >
                           <option value="">Select your age range</option>
                           <option value="Under 18">Under 18</option>
@@ -210,9 +349,7 @@ const handleSubmit = () => {
                         <select
                           className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                           value={formData.language}
-                          onChange={(e) =>
-                            updateField("language", e.target.value)
-                          }
+                          onChange={(e) => updateField("language", e.target.value)}
                         >
                           <option value="">Select language</option>
                           <option value="English">English</option>
@@ -246,9 +383,7 @@ const handleSubmit = () => {
                           placeholder="Enter your district"
                           className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                           value={formData.district}
-                          onChange={(e) =>
-                            updateField("district", e.target.value)
-                          }
+                          onChange={(e) => updateField("district", e.target.value)}
                         />
                       </div>
                     </div>
@@ -265,9 +400,7 @@ const handleSubmit = () => {
                       <select
                         className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         value={formData.qualification}
-                        onChange={(e) =>
-                          updateField("qualification", e.target.value)
-                        }
+                        onChange={(e) => updateField("qualification", e.target.value)}
                       >
                         <option value="">Select qualification</option>
                         {qualifications.map((qual) => (
@@ -305,9 +438,7 @@ const handleSubmit = () => {
                       >
                         <option value="">Select status</option>
                         <option value="Student">Student</option>
-                        <option value="Working Professional">
-                          Working Professional
-                        </option>
+                        <option value="Working Professional">Working Professional</option>
                         <option value="Job Seeker">Job Seeker</option>
                         <option value="Freelancer">Freelancer</option>
                       </select>
@@ -331,12 +462,9 @@ const handleSubmit = () => {
                             <Checkbox
                               id={skill}
                               checked={formData.selectedSkills.includes(skill)}
-                              onCheckedChange={() => toggleSkill(skill)}
+                              onCheckedChange={(val) => toggleSkill(skill, Boolean(val))}
                             />
-                            <label
-                              htmlFor={skill}
-                              className="text-sm cursor-pointer flex-1"
-                            >
+                            <label htmlFor={skill} className="text-sm cursor-pointer flex-1">
                               {skill}
                             </label>
                           </div>
@@ -356,12 +484,9 @@ const handleSubmit = () => {
                             <Checkbox
                               id={sector}
                               checked={formData.interests.includes(sector)}
-                              onCheckedChange={() => toggleInterest(sector)}
+                              onCheckedChange={(val) => toggleInterest(sector, Boolean(val))}
                             />
-                            <label
-                              htmlFor={sector}
-                              className="text-sm cursor-pointer flex-1"
-                            >
+                            <label htmlFor={sector} className="text-sm cursor-pointer flex-1">
                               {sector}
                             </label>
                           </div>
@@ -381,9 +506,7 @@ const handleSubmit = () => {
                       <select
                         className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         value={formData.careerGoal}
-                        onChange={(e) =>
-                          updateField("careerGoal", e.target.value)
-                        }
+                        onChange={(e) => updateField("careerGoal", e.target.value)}
                       >
                         <option value="">Select career goal</option>
                         {careerAspirations.map((aspiration) => (
@@ -399,9 +522,7 @@ const handleSubmit = () => {
                         Why this matters
                       </h3>
                       <p className="text-sm text-blue-800">
-                        Your career aspiration helps us recommend pathways that
-                        align with your long-term goals and ensure you develop
-                        the right skills for your desired career.
+                        Your career aspiration helps us recommend pathways that align with your long-term goals and ensure you develop the right skills for your desired career.
                       </p>
                     </div>
                   </div>
@@ -410,15 +531,11 @@ const handleSubmit = () => {
 
               {/* Navigation Buttons */}
               <div className="flex justify-between mt-8 pt-6 border-t border-gray-200">
-                <Button
-                  variant="outline"
-                  onClick={handleBack}
-                  disabled={currentStep === 0}
-                >
+                <Button variant="outline" onClick={handleBack} disabled={currentStep === 0 || saving}>
                   Back
                 </Button>
-                <Button onClick={handleNext}>
-                  {currentStep === steps.length - 1 ? "Complete" : "Next"}
+                <Button onClick={handleNext} disabled={saving}>
+                  {currentStep === steps.length - 1 ? (saving ? "Saving..." : "Complete") : "Next"}
                 </Button>
               </div>
             </Card>
