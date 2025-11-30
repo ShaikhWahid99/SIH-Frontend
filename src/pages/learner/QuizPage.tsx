@@ -1,4 +1,4 @@
-import { ReactNode, useState } from "react";
+import { ReactNode, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,9 @@ import {
   CheckCircle2,
   Brain,
   Compass,
+  Trophy,
+  Lightbulb,
+  Rocket
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { api } from "@/lib/api";
@@ -315,6 +318,13 @@ const categoryColors: Record<QuizCategory, string> = {
   goals: "bg-orange-500 text-white",
 };
 
+const categoryBgLight: Record<QuizCategory, string> = {
+  learning: "bg-blue-50/95 border-blue-200 text-blue-900 ring-blue-100",
+  motivation: "bg-purple-50/95 border-purple-200 text-purple-900 ring-purple-100",
+  preferences: "bg-green-50/95 border-green-200 text-green-900 ring-green-100",
+  goals: "bg-orange-50/95 border-orange-200 text-orange-900 ring-orange-100",
+};
+
 const categoryLabels: Record<QuizCategory, string> = {
   learning: "Learning Style",
   motivation: "Motivation",
@@ -345,12 +355,11 @@ const QuizPage = () => {
   const [answers, setAnswers] = useState<QuizAnswers>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showWelcomePopup, setShowWelcomePopup] = useState(true);
+  const [showResults, setShowResults] = useState(false);
   const [direction, setDirection] = useState<1 | -1>(1);
 
   const navigate = useNavigate();
   const { toast } = useToast();
-  
-  // FRIEND'S FEATURE: Backend integration
   const { refreshUser } = useAuth();
 
   const currentQuestionData = quizQuestions[currentQuestion];
@@ -375,7 +384,7 @@ const QuizPage = () => {
       setDirection(1);
       setCurrentQuestion((prev) => prev + 1);
     } else {
-      handleSubmit();
+      setShowResults(true);
     }
   };
 
@@ -392,8 +401,7 @@ const QuizPage = () => {
     setCurrentQuestion(index);
   };
 
-  // MERGED: Backend submission (friend's) + localStorage fallback (yours)
-  const handleSubmit = async () => {
+  const handleFinalSubmit = async () => {
     setIsSubmitting(true);
 
     try {
@@ -409,26 +417,23 @@ const QuizPage = () => {
         profileCompletedAt: new Date().toISOString(),
       };
 
-      // FRIEND'S FEATURE: Save to backend
       try {
         await api.postMe(completeProfileData);
         await refreshUser();
         localStorage.removeItem("onboardingData");
       } catch (apiError) {
         console.error("API submission failed, saving locally:", apiError);
-        // Fallback to localStorage if API fails
         localStorage.setItem(
           "userProfile",
           JSON.stringify(completeProfileData)
         );
       }
 
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
 
       toast({
-        title: "Quiz Completed! 🎉",
-        description:
-          "Your personalized learning path is being generated...",
+        title: "Profile Setup Complete! 🚀",
+        description: "Your personalized dashboard is ready.",
       });
 
       navigate("/learner/dashboard", { replace: true });
@@ -437,7 +442,7 @@ const QuizPage = () => {
       toast({
         title: "Submission Error",
         description:
-          "There was an error submitting your quiz. Please try again.",
+          "There was an error saving your profile. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -448,6 +453,40 @@ const QuizPage = () => {
   const startQuiz = () => {
     setShowWelcomePopup(false);
   };
+
+  const getResultsSummary = useMemo(() => {
+    const categories: QuizCategory[] = ["motivation", "goals", "learning", "preferences"];
+    
+    return categories.map(category => {
+      // Find the first answer in this category to act as the "Primary" driver for the summary
+      const firstQ = quizQuestions.find(q => q.category === category);
+      const answer = firstQ ? answers[firstQ.id] : "Not answered";
+      
+      let icon = <Sparkles className="w-5 h-5" />;
+      let title = "Insight";
+      
+      if (category === "motivation") {
+        icon = <Rocket className="w-5 h-5" />;
+        title = "Core Motivation";
+      } else if (category === "goals") {
+        icon = <Trophy className="w-5 h-5" />;
+        title = "Primary Goal";
+      } else if (category === "learning") {
+        icon = <Brain className="w-5 h-5" />;
+        title = "Learning Style";
+      } else {
+        icon = <Clock className="w-5 h-5" />;
+        title = "Study Routine";
+      }
+
+      return {
+        category,
+        title,
+        answer,
+        icon
+      };
+    });
+  }, [answers]);
 
   const renderOptions = (question: QuizQuestion) => {
     const currentAnswer = answers[question.id];
@@ -495,9 +534,169 @@ const QuizPage = () => {
     );
   };
 
+  // ───────────────────── IKIGAI DIAGRAM RENDERING ─────────────────────
+  if (showResults) {
+    const motivation = getResultsSummary.find(r => r.category === 'motivation');
+    const goals = getResultsSummary.find(r => r.category === 'goals');
+    const learning = getResultsSummary.find(r => r.category === 'learning');
+    const preferences = getResultsSummary.find(r => r.category === 'preferences');
+
+    // Helper for rendering a circle in the diagram
+    const IkigaiCircle = ({ 
+      data, 
+      className, 
+      delay 
+    }: { 
+      data: typeof motivation, 
+      className: string, 
+      delay: number 
+    }) => {
+      if (!data) return null;
+      return (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.6, delay }}
+          className={`absolute rounded-full flex flex-col items-center justify-center p-6 text-center shadow-lg backdrop-blur-sm border-2 transition-all hover:scale-105 hover:z-50 z-10 w-64 h-64 md:w-72 md:h-72 ${categoryBgLight[data.category]} ${className}`}
+        >
+          <div className={`p-2 rounded-full mb-2 ${categoryColors[data.category]}`}>
+            {data.icon}
+          </div>
+          <h3 className="font-bold text-sm uppercase tracking-wider mb-2 opacity-80">{data.title}</h3>
+          <p className="text-sm font-medium leading-snug line-clamp-4">
+            {data.answer}
+          </p>
+        </motion.div>
+      );
+    };
+
+    // Helper for rendering a mobile card
+    const MobileCard = ({ data, delay }: { data: typeof motivation, delay: number }) => {
+      if (!data) return null;
+      return (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay }}
+          className={`relative rounded-3xl p-6 shadow-md border-2 -mt-4 first:mt-0 ${categoryBgLight[data.category]}`}
+        >
+           <div className="flex items-center gap-3 mb-3">
+             <div className={`p-2 rounded-full ${categoryColors[data.category]} shadow-sm`}>
+               {data.icon}
+             </div>
+             <h3 className="font-bold text-base">{data.title}</h3>
+           </div>
+           <p className="text-sm font-medium opacity-90 leading-relaxed">
+             {data.answer}
+           </p>
+        </motion.div>
+      );
+    };
+
+    return (
+<div className="min-h-screen bg-[hsl(var(--card))] flex flex-col items-center py-8 px-4 relative overflow-x-hidden">
+
+
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center mb-8 z-10 relative"
+        >
+        <h1 className="text-3xl md:text-4xl font-bold mb-2" style={{ color: 'rgb(12 94 134)' }}>
+            Your Learning Profile
+          </h1>
+          <p className="max-w-lg mx-auto" style={{ color: 'hsl(var(--primary) / 0.9)' }}>
+            We've mapped your responses to find the perfect intersection of your goals, style, and motivation.
+          </p>
+        </motion.div>
+
+        {/* ─── DESKTOP IKIGAI DIAGRAM ─── */}
+  {/* ─── CENTER ENTIRE IKIGAI BLOCK ─── */}
+<div className="flex flex-col items-center justify-center my-12">
+  <div className="relative w-[360px] h-[630px] flex items-center justify-center">
+    {/* TOP LEFT: Motivation */}
+    <IkigaiCircle
+      data={motivation}
+      delay={0.1}
+      className="absolute -top-14 -left-24"
+    />
+
+    {/* TOP RIGHT: Goals */}
+    <IkigaiCircle
+      data={goals}
+      delay={0.2}
+      className="absolute -top-14 -right-24"
+    />
+
+    {/* BOTTOM LEFT: Learning */}
+    <IkigaiCircle
+      data={learning}
+      delay={0.3}
+      className="absolute -bottom-50 -left-24"
+    />
+
+    {/* BOTTOM RIGHT: Preferences */}
+    <IkigaiCircle
+      data={preferences}
+      delay={0.4}
+      className="absolute -bottom-50 -right-24"
+    />
+  </div>
+</div>
+
+
+        {/* ─── MOBILE STACKED VIEW ─── */}
+        <div className="md:hidden w-full max-w-sm flex flex-col pb-8 z-10 relative">
+          <MobileCard data={motivation} delay={0.1} />
+          <MobileCard data={goals} delay={0.2} />
+          <MobileCard data={learning} delay={0.3} />
+          <MobileCard data={preferences} delay={0.4} />
+          
+          <div className="mt-6 text-center">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-white rounded-full shadow-xl border-2 border-indigo-100 mb-3">
+               <span className="text-2xl">🎯</span>
+            </div>
+            <p className="font-bold text-gray-800">Your Personalized Path Ready</p>
+          </div>
+        </div>
+
+        {/* Action Button */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 1 }}
+          // className="z-50 -mt-4 md:mt-0 relative"
+          className="relative z-50 mt-[-150px] flex justify-center"
+        >
+          <Button
+            size="lg"
+            onClick={handleFinalSubmit}
+            disabled={isSubmitting}
+            // className="px-10 py-6 text-lg bg-gray-900 hover:bg-black text-white shadow-xl hover:shadow-2xl transition-all transform hover:-translate-y-1 rounded-full"
+
+               className="px-10 py-6 text-lg bg-[hsl(var(--primary))] hover:brightness-300 text-white shadow-xl transition-all transform hover:-translate-y-1 rounded-full"
+          >
+            {isSubmitting ? (
+              <>
+                <Sparkles className="w-5 h-5 mr-2 animate-spin" />
+                Generating...
+              </>
+            ) : (
+              <>
+                Generate My Curriculum
+                <ArrowRight className="w-5 h-5 ml-2" />
+              </>
+            )}
+          </Button>
+        </motion.div>
+      </div>
+    );
+  }
+
+  // ───────────────────── QUIZ VIEW ─────────────────────
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 py-6 px-4">
-      {/* YOUR FEATURE: Enhanced Welcome Popup */}
+      {/* Welcome Popup */}
       {showWelcomePopup && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <Card className="max-w-md w-full p-8 shadow-xl border-0 bg-white">
@@ -578,7 +777,6 @@ const QuizPage = () => {
           showWelcomePopup ? "blur-sm pointer-events-none" : ""
         }`}
       >
-        {/* YOUR FEATURE: Modern progress header */}
         <div className="mb-10 space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -608,7 +806,6 @@ const QuizPage = () => {
         </div>
 
         <div className="grid lg:grid-cols-[260px,1fr] gap-8 items-start">
-          {/* YOUR FEATURE: Enhanced sidebar with question navigation */}
           <Card className="p-5 bg-white/80 border-slate-200 shadow-sm sticky top-6 self-start">
             <h3 className="font-semibold text-gray-900 mb-4 text-sm">
               Overview
@@ -698,7 +895,6 @@ const QuizPage = () => {
             </div>
           </Card>
 
-          {/* YOUR FEATURE: Animated question card */}
           <Card className="p-6 md:p-8 bg-white border-slate-200 shadow-sm">
             <AnimatePresence mode="wait" custom={direction}>
               <motion.div
@@ -765,9 +961,7 @@ const QuizPage = () => {
                     className="gap-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-60"
                   >
                     {currentQuestion === quizQuestions.length - 1
-                      ? isSubmitting
-                        ? "Creating Your Path..."
-                        : "Complete Quiz"
+                      ? "See Results"
                       : "Next Question"}
                     <ChevronRight className="w-4 h-4" />
                   </Button>
@@ -782,3 +976,22 @@ const QuizPage = () => {
 };
 
 export default QuizPage;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
