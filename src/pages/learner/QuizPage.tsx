@@ -17,15 +17,22 @@ import {
   CheckCircle2,
   Brain,
   Compass,
+ 
   Trophy,
-  Lightbulb,
-  Rocket
+  Rocket,
+  Heart,
+  Briefcase,
+  Globe,
+  User,
+  MapPin,
+  Smile,
+  
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { api } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 
-type QuizCategory = "learning" | "motivation" | "preferences" | "goals";
+type QuizCategory = "interest" | "skills" | "purpose" | "career" | "personality";
 
 interface QuizQuestion {
   id: number;
@@ -41,295 +48,278 @@ interface QuizAnswers {
 }
 
 const quizQuestions: QuizQuestion[] = [
-  // ───────────────────── Motivation (5) ─────────────────────
+  // ──────────────── 🎯 A. What You Love (Interest & Passion) ────────────────
   {
     id: 1,
-    question: "What is your primary reason for learning right now?",
+    question: "Which type of activities do you enjoy the most?",
     type: "single",
-    category: "motivation",
-    icon: <Target className="w-6 h-6" />,
-    options: [
-      "To get a better job or promotion soon",
-      "To switch into a new career/role",
-      "To strengthen fundamentals and become confident",
-      "To explore and figure out what I like",
-    ],
+    category: "interest",
+    icon: <Heart className="w-5 h-5" />,
+    options: ["Working with machines or tools", "Helping or interacting with people", "Solving problems or analyzing data", "Creating or designing things", "Working outdoors / physical tasks"],
   },
   {
     id: 2,
-    question: "What keeps you going when the topic becomes difficult?",
+    question: "What kind of topics excite you the most?",
     type: "single",
-    category: "motivation",
-    icon: <Zap className="w-6 h-6" />,
-    options: [
-      "Clear progress and small wins",
-      "External deadlines or accountability",
-      "Interest in the topic itself",
-      "Rewards like certificates or recognition",
-    ],
+    category: "interest",
+    icon: <Heart className="w-5 h-5" />,
+    options: ["Technology & computers", "Healthcare & helping others", "Business & management", "Arts, design, or creativity", "Agriculture, nature, field work"],
   },
   {
     id: 3,
-    question: "How urgent do your learning outcomes feel?",
+    question: "If you had a full free day, what would you spend it doing?",
     type: "single",
-    category: "motivation",
-    icon: <Clock className="w-6 h-6" />,
-    options: [
-      "Very urgent – I need results in 1–3 months",
-      "Moderately urgent – 3–6 months",
-      "Long term – 6–12 months or more",
-      "I'm exploring with no fixed timeline",
-    ],
+    category: "interest",
+    icon: <Heart className="w-5 h-5" />,
+    options: ["Building or fixing something", "Reading/learning new concepts", "Creating art/design/content", "Meeting people / social activities", "Exploring outdoors or hands-on tasks"],
   },
   {
     id: 4,
-    question: "What motivates you most after finishing a topic?",
+    question: "Which school/college subject did you enjoy the most?",
     type: "single",
-    category: "motivation",
-    icon: <Star className="w-6 h-6" />,
-    options: [
-      "Being able to build or implement something",
-      "Positive feedback from mentors/peers",
-      "Seeing test scores or metrics improve",
-      "Feeling that my basics are stronger",
-    ],
+    category: "interest",
+    icon: <Heart className="w-5 h-5" />,
+    options: ["Maths / Science", "English / Communication", "Art / Design / Creativity", "Computer Science", "Physical Education / Field activities"],
   },
   {
     id: 5,
-    question: "Which statement matches your mindset about learning?",
+    question: "What type of work do you prefer?",
     type: "single",
-    category: "motivation",
-    icon: <Brain className="w-6 h-6" />,
-    options: [
-      "I'm okay with slow progress if I deeply understand",
-      "I want fast visible results, even if not perfect",
-      "I prefer a balance of speed and depth",
-      "I'm still figuring out what works for me",
-    ],
+    category: "interest",
+    icon: <Heart className="w-5 h-5" />,
+    options: ["Working with machines or technology", "Working with people", "Working with ideas and data", "Working outdoors", "Working creatively"],
   },
 
-  // ───────────────────── Learning Style (5) ─────────────────────
+  // ──────────────── 🧠 B. What You're Good At (Skills & Strengths) ────────────────
   {
     id: 6,
-    question: "When you start a new topic, what do you prefer first?",
+    question: "How good are you at solving problems?",
     type: "single",
-    category: "learning",
-    icon: <BookOpen className="w-6 h-6" />,
-    options: [
-      "A high-level overview video",
-      "A structured course with clear modules",
-      "Hands-on examples or mini projects",
-      "Reading docs/blogs at my own pace",
-    ],
+    category: "skills",
+    icon: <Zap className="w-5 h-5" />,
+    options: ["Excellent", "Good", "Average", "Poor"],
   },
   {
     id: 7,
-    question: "How do you understand a concept best?",
+    question: "Are you comfortable using machines, tools, or equipment?",
     type: "single",
-    category: "learning",
-    icon: <Zap className="w-6 h-6" />,
-    options: [
-      "By watching someone explain and demo it",
-      "By doing it myself with guided steps",
-      "By reading explanations and taking notes",
-      "By discussing it with others",
-    ],
+    category: "skills",
+    icon: <Zap className="w-5 h-5" />,
+    options: ["Very comfortable", "Somewhat comfortable", "A little uncomfortable", "Not comfortable"],
   },
   {
     id: 8,
-    question: "What kind of content format do you learn from most easily?",
+    question: "How well do you adapt to sudden changes?",
     type: "single",
-    category: "learning",
-    icon: <BookOpen className="w-6 h-6" />,
-    options: [
-      "Short bite-sized videos (5–10 minutes)",
-      "Longer, in-depth video lectures",
-      "Written guides, blogs, or textbooks",
-      "Interactive exercises and quizzes",
-    ],
+    category: "skills",
+    icon: <Zap className="w-5 h-5" />,
+    options: ["Very easily", "Somewhat easily", "With difficulty", "Not at all"],
   },
   {
     id: 9,
-    question: "During a learning session, how do you like to work?",
+    question: "Which of the following are your strongest skills?",
     type: "single",
-    category: "learning",
-    icon: <Users className="w-6 h-6" />,
-    options: [
-      "Fully focused solo, no distractions",
-      "With a friend/accountability partner",
-      "In a group/community setting",
-      "Doesn't matter, I adapt to both",
-    ],
+    category: "skills",
+    icon: <Zap className="w-5 h-5" />,
+    options: ["Technical skills", "Communication & people skills", "Creativity", "Logical/analytical thinking", "Physical/manual work"],
   },
   {
     id: 10,
-    question: "When you get stuck on a problem, what do you do first?",
+    question: "How well do you follow detailed instructions or SOPs?",
     type: "single",
-    category: "learning",
-    icon: <Compass className="w-6 h-6" />,
-    options: [
-      "Search online (Google/Stack Overflow)",
-      "Rewatch/revisit the theory or video",
-      "Ask a mentor or community",
-      "Leave it and come back later with a fresh mind",
-    ],
+    category: "skills",
+    icon: <Zap className="w-5 h-5" />,
+    options: ["Very well", "Well", "Average", "Poorly"],
   },
-
-  // ───────────────────── Goals (5) ─────────────────────
   {
     id: 11,
-    question: "What is your main learning goal for the next 6–12 months?",
+    question: "What type of task are you better at?",
     type: "single",
-    category: "goals",
-    icon: <Target className="w-6 h-6" />,
-    options: [
-      "Crack internships/jobs in tech",
-      "Switch to a different tech stack or field",
-      "Become very strong in core CS fundamentals",
-      "Build a solid project portfolio",
-    ],
+    category: "skills",
+    icon: <Zap className="w-5 h-5" />,
+    options: ["Mental/logical tasks", "Hands-on physical tasks", "Creative tasks", "People-oriented tasks"],
   },
   {
     id: 12,
-    question: "Which outcome would make you feel most successful?",
+    question: "What work style suits you best?",
     type: "single",
-    category: "goals",
-    icon: <Star className="w-6 h-6" />,
-    options: [
-      "Getting shortlisted/selected in interviews",
-      "Being able to build complex real-world apps",
-      "Explaining concepts clearly to others",
-      "Having a consistent learning habit",
-    ],
+    category: "skills",
+    icon: <Zap className="w-5 h-5" />,
+    options: ["Structured with clear rules", "Flexible & open-ended", "Creative and innovative", "Field-based and active"],
   },
+
+  // ──────────────── 🌍 C. What the World Needs (Purpose & Social Fit) ────────────────
   {
     id: 13,
-    question: "How deep do you want to go in your chosen topics?",
+    question: "Do you enjoy helping people directly?",
     type: "single",
-    category: "goals",
-    icon: <BookOpen className="w-6 h-6" />,
-    options: [
-      "Just enough to be job-ready quickly",
-      "Deep understanding of fewer topics",
-      "Breadth first, then depth later",
-      "I'm not sure yet, I want guidance",
-    ],
+    category: "purpose",
+    icon: <Globe className="w-5 h-5" />,
+    options: ["Yes, very much", "Somewhat", "Not really", "No"],
   },
   {
     id: 14,
-    question:
-      "Which type of goal structure do you find easiest to follow?",
+    question: "Do you enjoy improving processes, systems, or products?",
     type: "single",
-    category: "goals",
-    icon: <Clock className="w-6 h-6" />,
-    options: [
-      "Daily small tasks with micro-goals",
-      "Weekly targets with flexibility inside the week",
-      "Larger monthly milestones",
-      "Mix of all three depending on my schedule",
-    ],
+    category: "purpose",
+    icon: <Globe className="w-5 h-5" />,
+    options: ["Yes, I like identifying problems", "Yes, but only simple improvements", "Sometimes", "Not at all"],
   },
   {
     id: 15,
-    question: "How important are certifications or badges to you?",
+    question: "What motivates you the most?",
     type: "single",
-    category: "goals",
-    icon: <Star className="w-6 h-6" />,
-    options: [
-      "Very important – they are a key priority",
-      "Somewhat important – nice to have",
-      "Not important – skills and projects matter more",
-      "I'm not sure, I need guidance here",
-    ],
+    category: "purpose",
+    icon: <Globe className="w-5 h-5" />,
+    options: ["Helping people", "Creating or improving things", "Earning a stable income", "Solving challenging problems", "Doing physical tasks/productive work"],
   },
-
-  // ───────────────────── Preferences (5) ─────────────────────
   {
     id: 16,
-    question: "How much time can you realistically study on a typical weekday?",
+    question: "Would you choose a career where you contribute to society?",
     type: "single",
-    category: "preferences",
-    icon: <Clock className="w-6 h-6" />,
-    options: [
-      "15–30 minutes",
-      "30–60 minutes",
-      "1–2 hours",
-      "It varies a lot day to day",
-    ],
+    category: "purpose",
+    icon: <Globe className="w-5 h-5" />,
+    options: ["Definitely", "Maybe", "Not sure", "Not really"],
   },
+
+  // ──────────────── 💼 D. What You Can Be Paid For (Career Fit) ────────────────
   {
     id: 17,
-    question: "What session style do you prefer for most days?",
+    question: "What work environment do you prefer?",
     type: "single",
-    category: "preferences",
-    icon: <Users className="w-6 h-6" />,
-    options: [
-      "Short focused sprints (Pomodoro style)",
-      "One long deep-work block",
-      "Multiple small chunks across the day",
-      "Depends on my energy that day",
-    ],
+    category: "career",
+    icon: <Briefcase className="w-5 h-5" />,
+    options: ["Office", "Field/outdoor", "Workshop/lab", "Remote/digital", "Any environment"],
   },
   {
     id: 18,
-    question: "What type of feedback do you find most helpful?",
+    question: "How comfortable are you taking responsibility?",
     type: "single",
-    category: "preferences",
-    icon: <Users className="w-6 h-6" />,
-    options: [
-      "Instant automated feedback (tests/quizzes)",
-      "Detailed review from mentors",
-      "Peer feedback and discussions",
-      "Summary feedback at the end of a module",
-    ],
+    category: "career",
+    icon: <Briefcase className="w-5 h-5" />,
+    options: ["Very comfortable", "Somewhat comfortable", "Slightly uncomfortable", "Not comfortable"],
   },
   {
     id: 19,
-    question: "How structured do you want your learning path to be?",
+    question: "What type of tasks do you like?",
     type: "single",
-    category: "preferences",
-    icon: <Target className="w-6 h-6" />,
-    options: [
-      "Highly structured with strict steps",
-      "Guided path but a bit flexible",
-      "Loose structure with suggestions only",
-      "Completely flexible, I choose everything",
-    ],
+    category: "career",
+    icon: <Briefcase className="w-5 h-5" />,
+    options: ["Routine and predictable", "Dynamic and changing", "Creative and flexible", "Physical and hands-on"],
   },
   {
     id: 20,
-    question: "How do you feel about collaborative learning?",
+    question: "Are you willing to learn new technical or vocational skills?",
     type: "single",
-    category: "preferences",
-    icon: <Users className="w-6 h-6" />,
-    options: [
-      "I prefer learning solo most of the time",
-      "I like occasional group activities",
-      "I love community-based learning",
-      "I'm open to trying group learning",
-    ],
+    category: "career",
+    icon: <Briefcase className="w-5 h-5" />,
+    options: ["Yes, definitely", "Yes, somewhat", "Maybe", "No"],
+  },
+  {
+    id: 21,
+    question: "Do you prefer working under supervision or independently?",
+    type: "single",
+    category: "career",
+    icon: <Briefcase className="w-5 h-5" />,
+    options: ["Independently", "With minimal supervision", "Under guidance", "Fully supervised"],
+  },
+
+  // ──────────────── ⚡ E. Personality, Decision-Making & Work Style ────────────────
+  {
+    id: 22,
+    question: "How do you handle pressure?",
+    type: "single",
+    category: "personality",
+    icon: <Smile className="w-5 h-5" />,
+    options: ["Very well", "Well", "Not very well", "Poorly"],
+  },
+  {
+    id: 23,
+    question: "What teamwork style suits you best?",
+    type: "single",
+    category: "personality",
+    icon: <Smile className="w-5 h-5" />,
+    options: ["Leading a team", "Working with a team", "Supporting teammates", "Working alone"],
+  },
+  {
+    id: 24,
+    question: "How often do you want to learn new skills?",
+    type: "single",
+    category: "personality",
+    icon: <Smile className="w-5 h-5" />,
+    options: ["Very often", "Sometimes", "Rarely", "Never"],
+  },
+  {
+    id: 25,
+    question: "How important is job stability to you?",
+    type: "single",
+    category: "personality",
+    icon: <Smile className="w-5 h-5" />,
+    options: ["Very important", "Important", "Somewhat important", "Not important"],
+  },
+  {
+    id: 26,
+    question: "Are you comfortable with physical work?",
+    type: "single",
+    category: "personality",
+    icon: <Smile className="w-5 h-5" />,
+    options: ["Yes, very comfortable", "Somewhat comfortable", "A bit uncomfortable", "Not comfortable"],
+  },
+  {
+    id: 27,
+    question: "What type of thinker are you?",
+    type: "single",
+    category: "personality",
+    icon: <Smile className="w-5 h-5" />,
+    options: ["Detail-oriented", "Big-picture focused", "Creative thinker", "Logical thinker"],
+  },
+  {
+    id: 28,
+    question: "What type of problems do you prefer solving?",
+    type: "single",
+    category: "personality",
+    icon: <Smile className="w-5 h-5" />,
+    options: ["Technical issues", "People issues", "Creative challenges", "Physical challenges"],
+  },
+  {
+    id: 29,
+    question: "Are you willing to travel for work?",
+    type: "single",
+    category: "personality",
+    icon: <Smile className="w-5 h-5" />,
+    options: ["Yes, frequently", "Occasionally", "Rarely", "Never"],
+  },
+  {
+    id: 30,
+    question: "Do you enjoy teaching or guiding others?",
+    type: "single",
+    category: "personality",
+    icon: <Smile className="w-5 h-5" />,
+    options: ["Yes, very much", "Somewhat", "Rarely", "Never"],
   },
 ];
 
 const categoryColors: Record<QuizCategory, string> = {
-  learning: "bg-blue-500 text-white",
-  motivation: "bg-purple-500 text-white",
-  preferences: "bg-green-500 text-white",
-  goals: "bg-orange-500 text-white",
+  interest: "bg-blue-500 text-white",
+  skills: "bg-purple-500 text-white",
+  purpose: "bg-green-500 text-white",
+  career: "bg-orange-500 text-white",
+  personality: "bg-red-500 text-white",
 };
-
 const categoryBgLight: Record<QuizCategory, string> = {
-  learning: "bg-blue-50/95 border-blue-200 text-blue-900 ring-blue-100",
-  motivation: "bg-purple-50/95 border-purple-200 text-purple-900 ring-purple-100",
-  preferences: "bg-green-50/95 border-green-200 text-green-900 ring-green-100",
-  goals: "bg-orange-50/95 border-orange-200 text-orange-900 ring-orange-100",
+  interest: "bg-blue-50/95 border-blue-200 text-blue-900 ring-blue-100",
+  skills: "bg-purple-50/95 border-purple-200 text-purple-900 ring-purple-100",
+  purpose: "bg-green-50/95 border-green-200 text-green-900 ring-green-100",
+  career: "bg-orange-50/95 border-orange-200 text-orange-900 ring-orange-100",
+  personality: "bg-red-50/95 border-red-200 text-red-900 ring-red-100",
 };
 
 const categoryLabels: Record<QuizCategory, string> = {
-  learning: "Learning Style",
-  motivation: "Motivation",
-  preferences: "Preferences",
-  goals: "Goals",
+  interest: "Interest",
+  skills: "Skills",
+  purpose: "Purpose",
+  career: "Career",
+  personality: "Personality",
 };
 
 const questionVariants = {
@@ -464,7 +454,7 @@ const QuizPage = () => {
   };
 
   const getResultsSummary = useMemo(() => {
-    const categories: QuizCategory[] = ["motivation", "goals", "learning", "preferences"];
+    const categories: QuizCategory[] = ["skills", "career", "interest", "purpose", "personality"];
     
     return categories.map(category => {
       // Find the first answer in this category to act as the "Primary" driver for the summary
@@ -474,13 +464,13 @@ const QuizPage = () => {
       let icon = <Sparkles className="w-5 h-5" />;
       let title = "Insight";
       
-      if (category === "motivation") {
+      if (category === "skills") {
         icon = <Rocket className="w-5 h-5" />;
-        title = "Core Motivation";
-      } else if (category === "goals") {
+        title = "Core Skills";
+      } else if (category === "career") {
         icon = <Trophy className="w-5 h-5" />;
         title = "Primary Goal";
-      } else if (category === "learning") {
+      } else if (category === "interest") {
         icon = <Brain className="w-5 h-5" />;
         title = "Learning Style";
       } else {
@@ -545,10 +535,11 @@ const QuizPage = () => {
 
   // ───────────────────── IKIGAI DIAGRAM RENDERING ─────────────────────
   if (showResults) {
-    const motivation = getResultsSummary.find(r => r.category === 'motivation');
-    const goals = getResultsSummary.find(r => r.category === 'goals');
-    const learning = getResultsSummary.find(r => r.category === 'learning');
-    const preferences = getResultsSummary.find(r => r.category === 'preferences');
+    const skills = getResultsSummary.find(r => r.category === 'skills');
+    const career = getResultsSummary.find(r => r.category === 'career');
+    const interest = getResultsSummary.find(r => r.category === 'interest');
+    const purpose = getResultsSummary.find(r => r.category === 'purpose');
+    const personality = getResultsSummary.find(r => r.category === 'personality');
 
     // Helper for rendering a circle in the diagram
     const IkigaiCircle = ({ 
@@ -556,7 +547,7 @@ const QuizPage = () => {
       className, 
       delay 
     }: { 
-      data: typeof motivation, 
+      data: typeof skills, 
       className: string, 
       delay: number 
     }) => {
@@ -580,7 +571,7 @@ const QuizPage = () => {
     };
 
     // Helper for rendering a mobile card
-    const MobileCard = ({ data, delay }: { data: typeof motivation, delay: number }) => {
+    const MobileCard = ({ data, delay }: { data: typeof skills, delay: number }) => {
       if (!data) return null;
       return (
         <motion.div
@@ -623,30 +614,30 @@ const QuizPage = () => {
   {/* ─── CENTER ENTIRE IKIGAI BLOCK ─── */}
 <div className="flex flex-col items-center justify-center my-12">
   <div className="relative w-[360px] h-[630px] flex items-center justify-center">
-    {/* TOP LEFT: Motivation */}
+    {/* TOP LEFT: Skills */}
     <IkigaiCircle
-      data={motivation}
+      data={skills}
       delay={0.1}
       className="absolute -top-14 -left-24"
     />
 
-    {/* TOP RIGHT: Goals */}
+    {/* TOP RIGHT: Career */}
     <IkigaiCircle
-      data={goals}
+      data={career}
       delay={0.2}
       className="absolute -top-14 -right-24"
     />
 
-    {/* BOTTOM LEFT: Learning */}
+    {/* BOTTOM LEFT: Interest */}
     <IkigaiCircle
-      data={learning}
+      data={interest}
       delay={0.3}
       className="absolute -bottom-50 -left-24"
     />
 
-    {/* BOTTOM RIGHT: Preferences */}
+    {/* BOTTOM RIGHT: Purpose */}
     <IkigaiCircle
-      data={preferences}
+      data={purpose}
       delay={0.4}
       className="absolute -bottom-50 -right-24"
     />
@@ -656,10 +647,10 @@ const QuizPage = () => {
 
         {/* ─── MOBILE STACKED VIEW ─── */}
         <div className="md:hidden w-full max-w-sm flex flex-col pb-8 z-10 relative">
-          <MobileCard data={motivation} delay={0.1} />
-          <MobileCard data={goals} delay={0.2} />
-          <MobileCard data={learning} delay={0.3} />
-          <MobileCard data={preferences} delay={0.4} />
+          <MobileCard data={skills} delay={0.1} />
+          <MobileCard data={career} delay={0.2} />
+          <MobileCard data={interest} delay={0.3} />
+          <MobileCard data={purpose} delay={0.4} />
           
           <div className="mt-6 text-center">
             <div className="inline-flex items-center justify-center w-16 h-16 bg-white rounded-full shadow-xl border-2 border-indigo-100 mb-3">
