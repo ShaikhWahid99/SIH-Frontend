@@ -410,9 +410,18 @@ const QuizPage = () => {
         ? JSON.parse(onboardingData)
         : {};
 
+      // Build structured quiz responses with full context
+      const quizResponses = quizQuestions.map((q) => ({
+        questionId: q.id,
+        question: q.question,
+        category: q.category,
+        answer: answers[q.id] ?? "",
+      }));
+
       const completeProfileData = {
         ...parsedOnboardingData,
-        quizAnswers: answers,
+        quizAnswers: answers, // keep for compatibility with existing backend logic
+        quizResponses,
         quizCompleted: true,
         profileCompletedAt: new Date().toISOString(),
       };
