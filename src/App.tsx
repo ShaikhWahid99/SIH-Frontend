@@ -27,6 +27,7 @@ import NotFound from "./pages/NotFound";
 import QuizPage from "./pages/learner/QuizPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import OAuthSuccess from "./pages/auth/OAuthSuccess";
+import AdaptiveQuizPage from "./pages/learner/AdaptiveQuizPage";
 
 const queryClient = new QueryClient();
 
@@ -63,6 +64,9 @@ const App: React.FC = () => (
                 </ProtectedRoute>
               }
             />
+
+            <Route path="/adaptive-quiz" element={<AdaptiveQuizPage />} />
+
 
             {/* LEARNER DASHBOARD (both onboarding + quiz must be done) */}
             <Route

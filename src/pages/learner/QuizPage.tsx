@@ -485,12 +485,14 @@ const QuizPage = () => {
 
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
-      toast({
-        title: "Profile Setup Complete! 🚀",
-        description: "Your personalized dashboard is ready.",
-      });
+      navigate("/adaptive-quiz", { replace: true });
 
-      navigate("/learner/dashboard", { replace: true });
+      // toast({
+      //   title: "Profile Setup Complete! 🚀",
+      //   description: "Your personalized dashboard is ready.",
+      // });
+
+      // navigate("/learner/dashboard", { replace: true });
     } catch (error) {
       console.error("Quiz submission error:", error);
       toast({

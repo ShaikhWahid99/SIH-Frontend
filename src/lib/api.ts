@@ -2,6 +2,34 @@ import { getAccessToken, getRefreshToken, saveTokens, clearTokens } from "./auth
 
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:5000";
 
+// external LLM quiz service (Python API)
+const CAREER_QUIZ_BASE = "https://career-quiz-api.onrender.com";
+
+/**
+ * Shape of the Python API response
+ */
+export interface DynamicQuizApiResponse {
+  status: string;
+  user_id: string;
+  data: {
+    quiz_title: string;
+    questions: {
+      id: number;
+      question_text: string;
+      options: string[];
+    }[];
+  };
+}
+
+/**
+ * Normalized question type that your React components will use
+ */
+export interface DynamicQuizQuestion {
+  id: string;       // string for easier map keys in state
+  question: string;
+  options: string[];
+}
+
 function buildHeaders(opts: RequestInit = {}) {
   const token = getAccessToken();
   const headers: Record<string, string> = {
@@ -17,7 +45,7 @@ function buildHeaders(opts: RequestInit = {}) {
   return headers;
 }
 
-// RAW FETCH
+// RAW FETCH to your Node backend
 async function rawFetch(path: string, opts: RequestInit = {}) {
   const res = await fetch(API_BASE + path, {
     // credentials removed because we do not use cookies
@@ -37,7 +65,7 @@ async function rawFetch(path: string, opts: RequestInit = {}) {
   return { res, data };
 }
 
-// MAIN REQUEST WRAPPER
+// MAIN REQUEST WRAPPER (for your Node backend)
 async function request<T = any>(
   path: string,
   opts: RequestInit = {},
@@ -97,8 +125,34 @@ async function refreshSession() {
   }
 }
 
+/**
+ * Call the external Python LLM API to generate 10 dynamic quiz questions
+ * This DOES NOT go through your Node backend; it hits Render directly.
+ */
+async function fetchDynamicQuiz(userId: string): Promise<DynamicQuizQuestion[]> {
+  const res = await fetch(`${CAREER_QUIZ_BASE}/api/generate-quiz`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ user_id: userId }),
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(`Career quiz API error: ${res.status} ${text}`);
+  }
+
+  const json: DynamicQuizApiResponse = await res.json();
+
+  // Map the Python structure → frontend-friendly structure
+  return json.data.questions.map((q) => ({
+    id: String(q.id),
+    question: q.question_text,
+    options: q.options,
+  }));
+}
+
 export const api = {
-  // auth
+  // ─────────── auth ───────────
   register: (body: any) =>
     request("/auth/register", {
       method: "POST",
@@ -124,15 +178,30 @@ export const api = {
       body: JSON.stringify({ refreshToken: getRefreshToken() }),
     }),
 
-  // user
+  // ─────────── user ───────────
   getMe: () => request("/api/me"),
 
   postMe: (body: any) =>
     request("/api/me", { method: "POST", body: JSON.stringify(body) }),
 
-  // quiz
+  // ─────────── static quiz (existing) ───────────
   submitQuiz: (body: any) =>
     request("/quiz", { method: "POST", body: JSON.stringify(body) }),
+
+  // ─────────── dynamic LLM quiz (NEW) ───────────
+
+  /**
+   * Get 10 dynamic questions from Python API, based on user_id stored in DB
+   */
+  getDynamicQuiz: (userId: string) => fetchDynamicQuiz(userId),
+
+  /**
+   * Save dynamic quiz questions + answers to your own backend (/api/me)
+   * You’ll call this with something like:
+   *   api.saveDynamicQuiz({ dynamicQuizAnswers, dynamicQuizCompleted: true, dynamicQuizCompletedAt: ... })
+   */
+  saveDynamicQuiz: (body: any) =>
+    request("/api/me", { method: "POST", body: JSON.stringify(body) }),
 
   // google oauth start url
   startGoogle: () => `${API_BASE}/auth/google`,
