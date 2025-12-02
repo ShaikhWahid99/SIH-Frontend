@@ -300,27 +300,36 @@ const quizQuestions: QuizQuestion[] = [
 ];
 
 const categoryColors: Record<QuizCategory, string> = {
-  interest: "bg-blue-500 text-white",
-  skills: "bg-purple-500 text-white",
-  purpose: "bg-green-500 text-white",
-  career: "bg-orange-500 text-white",
-  personality: "bg-red-500 text-white",
+  interest: "bg-rose-500 text-white",
+  skills: "bg-amber-500 text-white",
+  purpose: "bg-emerald-500 text-white",
+  career: "bg-[hsl(var(--primary)/0.9)] text-white",
+  personality: "bg-purple-500 text-white",
 };
+
 const categoryBgLight: Record<QuizCategory, string> = {
-  interest: "bg-blue-50/95 border-blue-200 text-blue-900 ring-blue-100",
-  skills: "bg-purple-50/95 border-purple-200 text-purple-900 ring-purple-100",
-  purpose: "bg-green-50/95 border-green-200 text-green-900 ring-green-100",
-  career: "bg-orange-50/95 border-orange-200 text-orange-900 ring-orange-100",
-  personality: "bg-red-50/95 border-red-200 text-red-900 ring-red-100",
+  interest: "bg-rose-50/95 border-rose-200 text-rose-900 ring-rose-100",
+  skills: "bg-amber-50/95 border-amber-200 text-amber-900 ring-amber-100",
+  purpose: "bg-emerald-50/95 border-emerald-200 text-emerald-900 ring-emerald-100",
+  career: "bg-[hsl(var(--primary)/0.1)] border-[hsl(var(--primary)/0.2)] text-[hsl(var(--primary))] ring-[hsl(var(--primary)/0.2)]",
+  personality: "bg-purple-50/95 border-purple-200 text-purple-900 ring-purple-100",
 };
 
 const categoryLabels: Record<QuizCategory, string> = {
-  interest: "Interest",
-  skills: "Skills",
-  purpose: "Purpose",
-  career: "Career",
-  personality: "Personality",
+  interest: "Interests & Passion",
+  skills: "Skills & Strengths",
+  purpose: "Purpose & Impact",
+  career: "Career Fit",
+  personality: "Personality & Style",
 };
+
+const categoryIcons: Record<QuizCategory, ReactNode> = {
+  interest: <Heart className="w-5 h-5" />,
+  skills: <Zap className="w-5 h-5" />,
+  purpose: <Globe className="w-5 h-5" />,
+  career: <Briefcase className="w-5 h-5" />,
+  personality: <Smile className="w-5 h-5" />,
+}
 
 const questionVariants = {
   enter: (direction: number) => ({
@@ -338,6 +347,52 @@ const questionVariants = {
     opacity: 0,
     scale: 0.98,
   }),
+};
+
+// --- Sub-components ---
+
+const HexItem = ({ 
+  data, 
+  index,
+  total
+}: { 
+  data: any, 
+  index: number,
+  total: number
+}) => {
+  // Calculate position around a circle
+  // Starting from top ( -90 degrees offset)
+  const angle = (index * (360 / total)) - 90;
+  const radius = 180; // Distance from center in px
+  const radian = (angle * Math.PI) / 180;
+  
+  // We use CSS transform for positioning to keep it responsive-ish
+  // But for the desktop view we want explicit coordinates relative to center
+  const x = Math.cos(radian) * radius;
+  const y = Math.sin(radian) * radius;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0, x: 0, y: 0 }}
+      animate={{ opacity: 1, scale: 1, x: x, y: y }}
+      transition={{ duration: 0.5, delay: index * 0.1 }}
+      className={`absolute w-44 p-4 rounded-xl shadow-lg border backdrop-blur-sm z-10 flex flex-col items-center text-center
+        ${categoryBgLight[data.category as QuizCategory]}`}
+      style={{ 
+        // This centers the item on its calculated point
+        marginLeft: -88, // Half width
+        marginTop: -60,  // Half height (approx)
+      }}
+    >
+      <div className={`p-2 rounded-full mb-2 ${categoryColors[data.category as QuizCategory]}`}>
+        {data.icon}
+      </div>
+      <h3 className="font-bold text-xs uppercase tracking-wider mb-1 opacity-80">{data.title}</h3>
+      <p className="text-xs font-semibold leading-tight line-clamp-2">
+        {data.answer}
+      </p>
+    </motion.div>
+  );
 };
 
 const QuizPage = () => {
@@ -533,153 +588,85 @@ const QuizPage = () => {
     );
   };
 
-  // ───────────────────── IKIGAI DIAGRAM RENDERING ─────────────────────
+  // ───────────────────── 5-WAY RADAR/HEX RESULT RENDERING ─────────────────────
   if (showResults) {
-    const skills = getResultsSummary.find(r => r.category === 'skills');
-    const career = getResultsSummary.find(r => r.category === 'career');
-    const interest = getResultsSummary.find(r => r.category === 'interest');
-    const purpose = getResultsSummary.find(r => r.category === 'purpose');
-    const personality = getResultsSummary.find(r => r.category === 'personality');
-
-    // Helper for rendering a circle in the diagram
-    const IkigaiCircle = ({ 
-      data, 
-      className, 
-      delay 
-    }: { 
-      data: typeof skills, 
-      className: string, 
-      delay: number 
-    }) => {
-      if (!data) return null;
-      return (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.6, delay }}
-          className={`absolute rounded-full flex flex-col items-center justify-center p-6 text-center shadow-lg backdrop-blur-sm border-2 transition-all hover:scale-105 hover:z-50 z-10 w-64 h-64 md:w-72 md:h-72 ${categoryBgLight[data.category]} ${className}`}
-        >
-          <div className={`p-2 rounded-full mb-2 ${categoryColors[data.category]}`}>
-            {data.icon}
-          </div>
-          <h3 className="font-bold text-sm uppercase tracking-wider mb-2 opacity-80">{data.title}</h3>
-          <p className="text-sm font-medium leading-snug line-clamp-4">
-            {data.answer}
-          </p>
-        </motion.div>
-      );
-    };
-
-    // Helper for rendering a mobile card
-    const MobileCard = ({ data, delay }: { data: typeof skills, delay: number }) => {
-      if (!data) return null;
-      return (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay }}
-          className={`relative rounded-3xl p-6 shadow-md border-2 -mt-4 first:mt-0 ${categoryBgLight[data.category]}`}
-        >
-           <div className="flex items-center gap-3 mb-3">
-             <div className={`p-2 rounded-full ${categoryColors[data.category]} shadow-sm`}>
-               {data.icon}
-             </div>
-             <h3 className="font-bold text-base">{data.title}</h3>
-           </div>
-           <p className="text-sm font-medium opacity-90 leading-relaxed">
-             {data.answer}
-           </p>
-        </motion.div>
-      );
-    };
-
     return (
-<div className="min-h-screen bg-[hsl(var(--card))] flex flex-col items-center py-8 px-4 relative overflow-x-hidden">
-
-
+      <div className="min-h-screen bg-slate-50 flex flex-col items-center py-8 px-4 overflow-x-hidden">
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-8 z-10 relative"
+          className="text-center mb-12 z-10 relative max-w-2xl"
         >
-        <h1 className="text-3xl md:text-4xl font-bold mb-2" style={{ color: 'rgb(12 94 134)' }}>
-            Your Learning Profile
+          <h1 className="text-3xl md:text-4xl font-bold mb-3" style={{ color: 'hsl(var(--primary))', filter: 'brightness(0.6)' }}>
+            Your Comprehensive Profile
           </h1>
-          <p className="max-w-lg mx-auto" style={{ color: 'hsl(var(--primary) / 0.9)' }}>
-            We've mapped your responses to find the perfect intersection of your goals, style, and motivation.
+          <p className="text-slate-600">
+            We've analyzed your responses across 5 key dimensions to generate your unique learning DNA.
           </p>
         </motion.div>
 
-        {/* ─── DESKTOP IKIGAI DIAGRAM ─── */}
-  {/* ─── CENTER ENTIRE IKIGAI BLOCK ─── */}
-<div className="flex flex-col items-center justify-center my-12">
-  <div className="relative w-[360px] h-[630px] flex items-center justify-center">
-    {/* TOP LEFT: Skills */}
-    <IkigaiCircle
-      data={skills}
-      delay={0.1}
-      className="absolute -top-14 -left-24"
-    />
+        {/* ─── DESKTOP PENTAGON/CIRCLE VIEW ─── */}
+        <div className="hidden md:flex relative w-[600px] h-[600px] items-center justify-center my-8">
+            {/* Connecting Lines (Decorative) */}
+            <svg className="absolute inset-0 w-full h-full text-slate-200" style={{ zIndex: 0 }}>
+               <circle cx="300" cy="300" r="180" fill="none" stroke="currentColor" strokeWidth="1" strokeDasharray="4 4" />
+               <circle cx="300" cy="300" r="80" fill="none" stroke="currentColor" strokeWidth="1" />
+            </svg>
 
-    {/* TOP RIGHT: Career */}
-    <IkigaiCircle
-      data={career}
-      delay={0.2}
-      className="absolute -top-14 -right-24"
-    />
+            {/* Center Node */}
+            <motion.div 
+               initial={{ opacity: 0, scale: 0.5 }}
+               animate={{ opacity: 1, scale: 1 }}
+               className="absolute z-20 w-32 h-32 bg-white rounded-full shadow-xl border-4 border-slate-100 flex items-center justify-center flex-col"
+            >
+               <span className="text-3xl">🎯</span>
+               <span className="text-xs font-bold text-slate-400 mt-1">YOU</span>
+            </motion.div>
 
-    {/* BOTTOM LEFT: Interest */}
-    <IkigaiCircle
-      data={interest}
-      delay={0.3}
-      className="absolute -bottom-50 -left-24"
-    />
-
-    {/* BOTTOM RIGHT: Purpose */}
-    <IkigaiCircle
-      data={purpose}
-      delay={0.4}
-      className="absolute -bottom-50 -right-24"
-    />
-  </div>
-</div>
-
+            {/* Satellite Nodes */}
+            {getResultsSummary.map((item, index) => (
+              <HexItem key={item.category} data={item} index={index} total={5} />
+            ))}
+        </div>
 
         {/* ─── MOBILE STACKED VIEW ─── */}
-        <div className="md:hidden w-full max-w-sm flex flex-col pb-8 z-10 relative">
-          <MobileCard data={skills} delay={0.1} />
-          <MobileCard data={career} delay={0.2} />
-          <MobileCard data={interest} delay={0.3} />
-          <MobileCard data={purpose} delay={0.4} />
-          
-          <div className="mt-6 text-center">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-white rounded-full shadow-xl border-2 border-indigo-100 mb-3">
-               <span className="text-2xl">🎯</span>
-            </div>
-            <p className="font-bold text-gray-800">Your Personalized Path Ready</p>
-          </div>
+        <div className="md:hidden w-full max-w-sm flex flex-col gap-4 pb-12">
+           {getResultsSummary.map((item, index) => (
+             <motion.div
+               key={item.category}
+               initial={{ opacity: 0, x: -20 }}
+               animate={{ opacity: 1, x: 0 }}
+               transition={{ delay: index * 0.1 }}
+               className={`flex items-center gap-4 p-4 rounded-xl border shadow-sm ${categoryBgLight[item.category as QuizCategory]}`}
+             >
+                <div className={`p-2.5 rounded-full ${categoryColors[item.category as QuizCategory]}`}>
+                  {item.icon}
+                </div>
+                <div>
+                  <h3 className="text-xs font-bold uppercase opacity-70 mb-0.5">{item.title}</h3>
+                  <p className="text-sm font-semibold">{item.answer}</p>
+                </div>
+             </motion.div>
+           ))}
         </div>
 
         {/* Action Button */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 1 }}
-          // className="z-50 -mt-4 md:mt-0 relative"
-          className="relative z-50 mt-[-150px] flex justify-center"
+          transition={{ delay: 0.8 }}
+          className="relative z-50 md:-mt-12"
         >
           <Button
             size="lg"
             onClick={handleFinalSubmit}
             disabled={isSubmitting}
-            // className="px-10 py-6 text-lg bg-gray-900 hover:bg-black text-white shadow-xl hover:shadow-2xl transition-all transform hover:-translate-y-1 rounded-full"
-
-               className="px-10 py-6 text-lg bg-[hsl(var(--primary))] hover:brightness-300 text-white shadow-xl transition-all transform hover:-translate-y-1 rounded-full"
+            className="rounded-full px-8 py-6 text-lg shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all bg-[hsl(var(--primary)/0.9)] hover:bg-[hsl(var(--primary))] text-white"
           >
             {isSubmitting ? (
               <>
                 <Sparkles className="w-5 h-5 mr-2 animate-spin" />
-                Generating...
+                Analyzing...
               </>
             ) : (
               <>
