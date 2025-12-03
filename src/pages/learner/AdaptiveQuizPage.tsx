@@ -1,8 +1,25 @@
 // src/pages/AdaptiveQuizPage.tsx
+import { useEffect, useState, useRef, useMemo } from "react";
 
-import { useEffect, useState } from "react";
+
+import { motion } from "framer-motion";
+
+import {
+  CheckCircle,
+  ChevronLeft,
+  ChevronRight,
+  Sparkles,
+  Rocket,
+  Trophy,
+  Brain,
+  Clock,
+  ArrowRight
+} from "lucide-react";
+
+import Loader from "@/components/Loader";
+
 import { useNavigate } from "react-router-dom";
-import { CheckCircle, ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
+
 
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
