@@ -307,13 +307,6 @@ const categoryColors: Record<QuizCategory, string> = {
   personality: "bg-purple-500 text-white",
 };
 
-const categoryBgLight: Record<QuizCategory, string> = {
-  interest: "bg-rose-50/95 border-rose-200 text-rose-900 ring-rose-100",
-  skills: "bg-amber-50/95 border-amber-200 text-amber-900 ring-amber-100",
-  purpose: "bg-emerald-50/95 border-emerald-200 text-emerald-900 ring-emerald-100",
-  career: "bg-[hsl(var(--primary)/0.1)] border-[hsl(var(--primary)/0.2)] text-[hsl(var(--primary))] ring-[hsl(var(--primary)/0.2)]",
-  personality: "bg-purple-50/95 border-purple-200 text-purple-900 ring-purple-100",
-};
 
 const categoryLabels: Record<QuizCategory, string> = {
   interest: "Interests & Passion",
@@ -323,13 +316,6 @@ const categoryLabels: Record<QuizCategory, string> = {
   personality: "Personality & Style",
 };
 
-const categoryIcons: Record<QuizCategory, ReactNode> = {
-  interest: <Heart className="w-5 h-5" />,
-  skills: <Zap className="w-5 h-5" />,
-  purpose: <Globe className="w-5 h-5" />,
-  career: <Briefcase className="w-5 h-5" />,
-  personality: <Smile className="w-5 h-5" />,
-}
 
 const questionVariants = {
   enter: (direction: number) => ({
@@ -349,58 +335,12 @@ const questionVariants = {
   }),
 };
 
-// --- Sub-components ---
-
-const HexItem = ({ 
-  data, 
-  index,
-  total
-}: { 
-  data: any, 
-  index: number,
-  total: number
-}) => {
-  // Calculate position around a circle
-  // Starting from top ( -90 degrees offset)
-  const angle = (index * (360 / total)) - 90;
-  const radius = 180; // Distance from center in px
-  const radian = (angle * Math.PI) / 180;
-  
-  // We use CSS transform for positioning to keep it responsive-ish
-  // But for the desktop view we want explicit coordinates relative to center
-  const x = Math.cos(radian) * radius;
-  const y = Math.sin(radian) * radius;
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0, x: 0, y: 0 }}
-      animate={{ opacity: 1, scale: 1, x: x, y: y }}
-      transition={{ duration: 0.5, delay: index * 0.1 }}
-      className={`absolute w-44 p-4 rounded-xl shadow-lg border backdrop-blur-sm z-10 flex flex-col items-center text-center
-        ${categoryBgLight[data.category as QuizCategory]}`}
-      style={{ 
-        // This centers the item on its calculated point
-        marginLeft: -88, // Half width
-        marginTop: -60,  // Half height (approx)
-      }}
-    >
-      <div className={`p-2 rounded-full mb-2 ${categoryColors[data.category as QuizCategory]}`}>
-        {data.icon}
-      </div>
-      <h3 className="font-bold text-xs uppercase tracking-wider mb-1 opacity-80">{data.title}</h3>
-      <p className="text-xs font-semibold leading-tight line-clamp-2">
-        {data.answer}
-      </p>
-    </motion.div>
-  );
-};
 
 const QuizPage = () => {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<QuizAnswers>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showWelcomePopup, setShowWelcomePopup] = useState(true);
-  const [showResults, setShowResults] = useState(false);
   const [direction, setDirection] = useState<1 | -1>(1);
 
   const navigate = useNavigate();
@@ -429,7 +369,7 @@ const QuizPage = () => {
       setDirection(1);
       setCurrentQuestion((prev) => prev + 1);
     } else {
-      setShowResults(true);
+      handleFinalSubmit();
     }
   };
 
@@ -510,39 +450,6 @@ const QuizPage = () => {
     setShowWelcomePopup(false);
   };
 
-  const getResultsSummary = useMemo(() => {
-    const categories: QuizCategory[] = ["skills", "career", "interest", "purpose", "personality"];
-    
-    return categories.map(category => {
-      // Find the first answer in this category to act as the "Primary" driver for the summary
-      const firstQ = quizQuestions.find(q => q.category === category);
-      const answer = firstQ ? answers[firstQ.id] : "Not answered";
-      
-      let icon = <Sparkles className="w-5 h-5" />;
-      let title = "Insight";
-      
-      if (category === "skills") {
-        icon = <Rocket className="w-5 h-5" />;
-        title = "Core Skills";
-      } else if (category === "career") {
-        icon = <Trophy className="w-5 h-5" />;
-        title = "Primary Goal";
-      } else if (category === "interest") {
-        icon = <Brain className="w-5 h-5" />;
-        title = "Learning Style";
-      } else {
-        icon = <Clock className="w-5 h-5" />;
-        title = "Study Routine";
-      }
-
-      return {
-        category,
-        title,
-        answer,
-        icon
-      };
-    });
-  }, [answers]);
 
   const renderOptions = (question: QuizQuestion) => {
     const currentAnswer = answers[question.id];
@@ -589,98 +496,6 @@ const QuizPage = () => {
       </div>
     );
   };
-
-  // ───────────────────── 5-WAY RADAR/HEX RESULT RENDERING ─────────────────────
-  if (showResults) {
-    return (
-      <div className="min-h-screen bg-slate-50 flex flex-col items-center py-8 px-4 overflow-x-hidden">
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-12 z-10 relative max-w-2xl"
-        >
-          <h1 className="text-3xl md:text-4xl font-bold mb-3" style={{ color: 'hsl(var(--primary))', filter: 'brightness(0.6)' }}>
-            Your Comprehensive Profile
-          </h1>
-          <p className="text-slate-600">
-            We've analyzed your responses across 5 key dimensions to generate your unique learning DNA.
-          </p>
-        </motion.div>
-
-        {/* ─── DESKTOP PENTAGON/CIRCLE VIEW ─── */}
-        <div className="hidden md:flex relative w-[600px] h-[600px] items-center justify-center my-8">
-            {/* Connecting Lines (Decorative) */}
-            <svg className="absolute inset-0 w-full h-full text-slate-200" style={{ zIndex: 0 }}>
-               <circle cx="300" cy="300" r="180" fill="none" stroke="currentColor" strokeWidth="1" strokeDasharray="4 4" />
-               <circle cx="300" cy="300" r="80" fill="none" stroke="currentColor" strokeWidth="1" />
-            </svg>
-
-            {/* Center Node */}
-            <motion.div 
-               initial={{ opacity: 0, scale: 0.5 }}
-               animate={{ opacity: 1, scale: 1 }}
-               className="absolute z-20 w-32 h-32 bg-white rounded-full shadow-xl border-4 border-slate-100 flex items-center justify-center flex-col"
-            >
-               <span className="text-3xl">🎯</span>
-               <span className="text-xs font-bold text-slate-400 mt-1">YOU</span>
-            </motion.div>
-
-            {/* Satellite Nodes */}
-            {getResultsSummary.map((item, index) => (
-              <HexItem key={item.category} data={item} index={index} total={5} />
-            ))}
-        </div>
-
-        {/* ─── MOBILE STACKED VIEW ─── */}
-        <div className="md:hidden w-full max-w-sm flex flex-col gap-4 pb-12">
-           {getResultsSummary.map((item, index) => (
-             <motion.div
-               key={item.category}
-               initial={{ opacity: 0, x: -20 }}
-               animate={{ opacity: 1, x: 0 }}
-               transition={{ delay: index * 0.1 }}
-               className={`flex items-center gap-4 p-4 rounded-xl border shadow-sm ${categoryBgLight[item.category as QuizCategory]}`}
-             >
-                <div className={`p-2.5 rounded-full ${categoryColors[item.category as QuizCategory]}`}>
-                  {item.icon}
-                </div>
-                <div>
-                  <h3 className="text-xs font-bold uppercase opacity-70 mb-0.5">{item.title}</h3>
-                  <p className="text-sm font-semibold">{item.answer}</p>
-                </div>
-             </motion.div>
-           ))}
-        </div>
-
-        {/* Action Button */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.8 }}
-          className="relative z-50 md:-mt-12"
-        >
-          <Button
-            size="lg"
-            onClick={handleFinalSubmit}
-            disabled={isSubmitting}
-            className="rounded-full px-8 py-6 text-lg shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all bg-[hsl(var(--primary)/0.9)] hover:bg-[hsl(var(--primary))] text-white"
-          >
-            {isSubmitting ? (
-              <>
-                <Sparkles className="w-5 h-5 mr-2 animate-spin" />
-                Analyzing...
-              </>
-            ) : (
-              <>
-                Generate My Curriculum
-                <ArrowRight className="w-5 h-5 ml-2" />
-              </>
-            )}
-          </Button>
-        </motion.div>
-      </div>
-    );
-  }
 
   // ───────────────────── QUIZ VIEW ─────────────────────
   return (
