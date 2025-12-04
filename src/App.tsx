@@ -28,6 +28,9 @@ import QuizPage from "./pages/learner/QuizPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import OAuthSuccess from "./pages/auth/OAuthSuccess";
 import AdaptiveQuizPage from "./pages/learner/AdaptiveQuizPage";
+import RecommendedCoursesPage from "@/pages/learner/RecommendedCoursesPage";
+import SimilarCoursesPage from "@/pages/learner/SimilarCoursesPage";
+
 
 const queryClient = new QueryClient();
 
@@ -134,6 +137,33 @@ const App: React.FC = () => (
                 </ProtectedRoute>
               }
             />
+
+            <Route
+              path="/learner/recommended-courses"
+              element={
+                <ProtectedRoute requireOnboarded={true} requireQuiz={true}>
+                  <LearnerLayout>
+                    <RecommendedCoursesPage />
+                  </LearnerLayout>
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/learner/similar-courses-page"
+              element={
+                <ProtectedRoute requireOnboarded={true} requireQuiz={true}>
+                  <LearnerLayout>
+                    <SimilarCoursesPage />
+                  </LearnerLayout>
+                </ProtectedRoute>
+              }
+            />
+
+
+
+
+
             <Route path="/oauth-success" element={<OAuthSuccess />} />
 
             {/* 404 */}
