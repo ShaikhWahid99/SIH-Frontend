@@ -97,15 +97,6 @@ const SimilarCoursesPage = () => {
         ))}
       </div>
 
-      {/* Back Button */}
-      <div className="mt-4">
-        <Link to="/learner/dashboard">
-          <Button size="lg" variant="outline" className="w-full">
-            Back to Dashboard
-          </Button>
-        </Link>
-      </div>
-
     </div>
   );
 };
