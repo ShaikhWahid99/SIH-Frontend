@@ -1,4 +1,4 @@
-import { Home, BookOpen, Target, User, TrendingUp, MessageSquare, Menu } from 'lucide-react';
+import { Home, BookOpen, Target, User, TrendingUp, MessageSquare, Menu,Layers } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useState } from 'react';
 
@@ -6,6 +6,7 @@ const navItems = [
   { icon: Home, label: 'Dashboard', path: '/learner/dashboard' },
   { icon: BookOpen, label: 'Pathways', path: '/learner/pathways' },
   { icon: TrendingUp, label: 'Progress', path: '/learner/progress' },
+  { icon: Layers, label: 'Recommended Courses', path: '/learner/recommended-courses' },
   { icon: User, label: 'Profile', path: '/learner/profile' },
   { icon: MessageSquare, label: 'Feedback', path: '/learner/feedback' },
 ];
