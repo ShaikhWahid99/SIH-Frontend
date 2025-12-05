@@ -4,10 +4,58 @@ import { Button } from "@/components/ui/button";
 import { TextInput } from "@/components/shared/TextInput";
 import { User } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
-
+import { translateText } from "@/utils/translate.js"; // ✅ API TRANSLATOR
 const ProfilePage = () => {
   const [isEditing, setIsEditing] = useState(false);
   const { user } = useAuth();
+
+  // ✅ Language State
+  const [lang, setLang] = useState("en");
+
+  // ✅ Translatable UI Text (Original English)
+  const originalText = {
+    title: "My Profile",
+    editBtn: "Edit Profile",
+    saveBtn: "Save Changes",
+    cancelBtn: "Cancel",
+    personalDetails: "Personal Details",
+    educationTitle: "Education & Interests",
+
+    fullName: "Full Name",
+    email: "Email",
+    preferredLanguage: "Preferred Language",
+    ageRange: "Age Range",
+    state: "State",
+    district: "District",
+
+    educationLevel: "Education Level",
+    stream: "Stream",
+    status: "Current Status",
+    skills: "Skills",
+    interests: "Interests",
+    goals: "Career Goals",
+  };
+
+  const [uiText, setUiText] = useState(originalText);
+
+  // ✅ Auto-translate UI when language changes
+  useEffect(() => {
+    async function translateUI() {
+      if (lang === "en") {
+        setUiText(originalText);
+        return;
+      }
+
+      const translated = {};
+      for (let key in originalText) {
+        translated[key] = await translateText(originalText[key], lang);
+      }
+      setUiText(translated);
+    }
+
+    translateUI();
+  }, [lang]);
+
   const [profile, setProfile] = useState({
     name: "",
     email: "",
@@ -38,29 +86,41 @@ const ProfilePage = () => {
       stream: details?.education?.stream || "",
       experience: details?.education?.status || "",
       interests: Array.isArray(details?.interestSectors)
-        ? details!.interestSectors.join(", ")
+        ? details.interestSectors.join(", ")
         : "",
       goals: details?.careerGoal || "",
-      skills: Array.isArray(details?.skills) ? details!.skills.join(", ") : "",
+      skills: Array.isArray(details?.skills)
+        ? details.skills.join(", ")
+        : "",
     });
   }, [user]);
 
   const handleSave = () => {
     setIsEditing(false);
-    
   };
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
+
+      {/* ✅ LANGUAGE SWITCH */}
+      <div className="flex justify-end gap-2">
+        <Button variant="outline" onClick={() => setLang("en")}>EN</Button>
+        <Button variant="outline" onClick={() => setLang("hi")}>HI</Button>
+        <Button variant="outline" onClick={() => setLang("mr")}>MR</Button>
+      </div>
+
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">My Profile</h1>
+        <h1 className="text-3xl font-bold">{uiText.title}</h1>
+
         {!isEditing ? (
-          <Button onClick={() => setIsEditing(true)}>Edit Profile</Button>
+          <Button onClick={() => setIsEditing(true)}>
+            {uiText.editBtn}
+          </Button>
         ) : (
           <div className="flex gap-2">
-            <Button onClick={handleSave}>Save Changes</Button>
+            <Button onClick={handleSave}>{uiText.saveBtn}</Button>
             <Button variant="outline" onClick={() => setIsEditing(false)}>
-              Cancel
+              {uiText.cancelBtn}
             </Button>
           </div>
         )}
@@ -78,21 +138,27 @@ const ProfilePage = () => {
             </div>
           </div>
         </CardHeader>
+
         <CardContent className="space-y-6">
+
           <div className="border-t pt-6">
-            <h3 className="text-lg font-semibold mb-4">Personal Details</h3>
+            <h3 className="text-lg font-semibold mb-4">
+              {uiText.personalDetails}
+            </h3>
+
             <div className="grid md:grid-cols-2 gap-6">
               <TextInput
-                label="Full Name"
+                label={uiText.fullName}
                 value={profile.name}
                 onChange={(e) =>
                   setProfile({ ...profile, name: e.target.value })
                 }
                 readOnly={!isEditing}
               />
+
               {profile.email && (
                 <TextInput
-                  label="Email"
+                  label={uiText.email}
                   type="email"
                   value={profile.email}
                   onChange={(e) =>
@@ -101,43 +167,39 @@ const ProfilePage = () => {
                   readOnly={!isEditing}
                 />
               )}
+
               <TextInput
-                label="Preferred Language"
+                label={uiText.preferredLanguage}
                 value={profile.language}
                 onChange={(e) =>
                   setProfile({ ...profile, language: e.target.value })
                 }
                 readOnly={!isEditing}
               />
+
               <TextInput
-                label="Age Range"
+                label={uiText.ageRange}
                 value={profile.ageRange}
                 onChange={(e) =>
                   setProfile({ ...profile, ageRange: e.target.value })
                 }
                 readOnly={!isEditing}
               />
+
               <TextInput
-                label="State"
+                label={uiText.state}
                 value={profile.state}
                 onChange={(e) =>
                   setProfile({ ...profile, state: e.target.value })
                 }
                 readOnly={!isEditing}
               />
+
               <TextInput
-                label="District"
+                label={uiText.district}
                 value={profile.district}
                 onChange={(e) =>
                   setProfile({ ...profile, district: e.target.value })
-                }
-                readOnly={!isEditing}
-              />
-              <TextInput
-                label="Preferred Language"
-                value={profile.language}
-                onChange={(e) =>
-                  setProfile({ ...profile, language: e.target.value })
                 }
                 readOnly={!isEditing}
               />
@@ -146,51 +208,57 @@ const ProfilePage = () => {
 
           <div className="border-t pt-6">
             <h3 className="text-lg font-semibold mb-4">
-              Education & Interests
+              {uiText.educationTitle}
             </h3>
+
             <div className="grid md:grid-cols-2 gap-6">
               <TextInput
-                label="Education Level"
+                label={uiText.educationLevel}
                 value={profile.education}
                 onChange={(e) =>
                   setProfile({ ...profile, education: e.target.value })
                 }
                 readOnly={!isEditing}
               />
+
               <TextInput
-                label="Stream"
+                label={uiText.stream}
                 value={profile.stream}
                 onChange={(e) =>
                   setProfile({ ...profile, stream: e.target.value })
                 }
                 readOnly={!isEditing}
               />
+
               <TextInput
-                label="Current Status"
+                label={uiText.status}
                 value={profile.experience}
                 onChange={(e) =>
                   setProfile({ ...profile, experience: e.target.value })
                 }
                 readOnly={!isEditing}
               />
+
               <TextInput
-                label="Skills"
+                label={uiText.skills}
                 value={profile.skills}
                 onChange={(e) =>
                   setProfile({ ...profile, skills: e.target.value })
                 }
                 readOnly={!isEditing}
               />
+
               <TextInput
-                label="Interests"
+                label={uiText.interests}
                 value={profile.interests}
                 onChange={(e) =>
                   setProfile({ ...profile, interests: e.target.value })
                 }
                 readOnly={!isEditing}
               />
+
               <TextInput
-                label="Career Goals"
+                label={uiText.goals}
                 value={profile.goals}
                 onChange={(e) =>
                   setProfile({ ...profile, goals: e.target.value })
@@ -199,6 +267,7 @@ const ProfilePage = () => {
               />
             </div>
           </div>
+
         </CardContent>
       </Card>
     </div>
