@@ -4,15 +4,16 @@ import { Button } from "@/components/ui/button";
 import { TextInput } from "@/components/shared/TextInput";
 import { User } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
-import { translateText } from "@/utils/translate.js"; // ✅ API TRANSLATOR
+import { useLanguage } from "@/context/LanguageContext";
+
 const ProfilePage = () => {
   const [isEditing, setIsEditing] = useState(false);
   const { user } = useAuth();
 
-  // ✅ Language State
-  const [lang, setLang] = useState("en");
+  // ✅ GLOBAL LANGUAGE
+  const { lang, setLang, translate } = useLanguage();
 
-  // ✅ Translatable UI Text (Original English)
+  // ✅ ORIGINAL UI TEXT (ENGLISH SOURCE)
   const originalText = {
     title: "My Profile",
     editBtn: "Edit Profile",
@@ -38,24 +39,35 @@ const ProfilePage = () => {
 
   const [uiText, setUiText] = useState(originalText);
 
-  // ✅ Auto-translate UI when language changes
+  // ✅ ✅ ✅ FIXED AUTO TRANSLATION (USES GLOBAL TRANSLATE)
   useEffect(() => {
+    let mounted = true;
+
     async function translateUI() {
       if (lang === "en") {
-        setUiText(originalText);
+        mounted && setUiText(originalText);
         return;
       }
 
-      const translated = {};
-      for (let key in originalText) {
-        translated[key] = await translateText(originalText[key], lang);
+      const translated: typeof originalText = {} as any;
+
+      for (const key in originalText) {
+        translated[key as keyof typeof originalText] = await translate(
+          originalText[key as keyof typeof originalText]
+        );
       }
-      setUiText(translated);
+
+      mounted && setUiText(translated);
     }
 
     translateUI();
+
+    return () => {
+      mounted = false;
+    };
   }, [lang]);
 
+  // ✅ PROFILE DATA
   const [profile, setProfile] = useState({
     name: "",
     email: "",
@@ -74,6 +86,7 @@ const ProfilePage = () => {
 
   useEffect(() => {
     const details = user?.userDetails || null;
+
     setProfile({
       name: user?.displayName || "",
       email: user?.email || "",
@@ -102,13 +115,31 @@ const ProfilePage = () => {
   return (
     <div className="max-w-4xl mx-auto space-y-6">
 
-      {/* ✅ LANGUAGE SWITCH */}
+      {/* ✅ ✅ ✅ GLOBAL LANGUAGE SWITCH (WORKING) */}
       <div className="flex justify-end gap-2">
-        <Button variant="outline" onClick={() => setLang("en")}>EN</Button>
-        <Button variant="outline" onClick={() => setLang("hi")}>HI</Button>
-        <Button variant="outline" onClick={() => setLang("mr")}>MR</Button>
+        <Button
+          variant={lang === "en" ? "default" : "outline"}
+          onClick={() => setLang("en")}
+        >
+          EN
+        </Button>
+
+        <Button
+          variant={lang === "hi" ? "default" : "outline"}
+          onClick={() => setLang("hi")}
+        >
+          HI
+        </Button>
+
+        <Button
+          variant={lang === "mr" ? "default" : "outline"}
+          onClick={() => setLang("mr")}
+        >
+          MR
+        </Button>
       </div>
 
+      {/* ✅ HEADER */}
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">{uiText.title}</h1>
 
@@ -132,6 +163,7 @@ const ProfilePage = () => {
             <div className="w-20 h-20 bg-primary rounded-full flex items-center justify-center">
               <User className="w-10 h-10 text-primary-foreground" />
             </div>
+
             <div>
               <CardTitle className="text-2xl">{profile.name}</CardTitle>
               <p className="text-muted-foreground capitalize">{profile.role}</p>
@@ -141,130 +173,37 @@ const ProfilePage = () => {
 
         <CardContent className="space-y-6">
 
+          {/* ✅ PERSONAL DETAILS */}
           <div className="border-t pt-6">
             <h3 className="text-lg font-semibold mb-4">
               {uiText.personalDetails}
             </h3>
 
             <div className="grid md:grid-cols-2 gap-6">
-              <TextInput
-                label={uiText.fullName}
-                value={profile.name}
-                onChange={(e) =>
-                  setProfile({ ...profile, name: e.target.value })
-                }
-                readOnly={!isEditing}
-              />
-
+              <TextInput label={uiText.fullName} value={profile.name} readOnly />
               {profile.email && (
-                <TextInput
-                  label={uiText.email}
-                  type="email"
-                  value={profile.email}
-                  onChange={(e) =>
-                    setProfile({ ...profile, email: e.target.value })
-                  }
-                  readOnly={!isEditing}
-                />
+                <TextInput label={uiText.email} value={profile.email} readOnly />
               )}
-
-              <TextInput
-                label={uiText.preferredLanguage}
-                value={profile.language}
-                onChange={(e) =>
-                  setProfile({ ...profile, language: e.target.value })
-                }
-                readOnly={!isEditing}
-              />
-
-              <TextInput
-                label={uiText.ageRange}
-                value={profile.ageRange}
-                onChange={(e) =>
-                  setProfile({ ...profile, ageRange: e.target.value })
-                }
-                readOnly={!isEditing}
-              />
-
-              <TextInput
-                label={uiText.state}
-                value={profile.state}
-                onChange={(e) =>
-                  setProfile({ ...profile, state: e.target.value })
-                }
-                readOnly={!isEditing}
-              />
-
-              <TextInput
-                label={uiText.district}
-                value={profile.district}
-                onChange={(e) =>
-                  setProfile({ ...profile, district: e.target.value })
-                }
-                readOnly={!isEditing}
-              />
+              <TextInput label={uiText.preferredLanguage} value={profile.language} readOnly />
+              <TextInput label={uiText.ageRange} value={profile.ageRange} readOnly />
+              <TextInput label={uiText.state} value={profile.state} readOnly />
+              <TextInput label={uiText.district} value={profile.district} readOnly />
             </div>
           </div>
 
+          {/* ✅ EDUCATION & INTERESTS */}
           <div className="border-t pt-6">
             <h3 className="text-lg font-semibold mb-4">
               {uiText.educationTitle}
             </h3>
 
             <div className="grid md:grid-cols-2 gap-6">
-              <TextInput
-                label={uiText.educationLevel}
-                value={profile.education}
-                onChange={(e) =>
-                  setProfile({ ...profile, education: e.target.value })
-                }
-                readOnly={!isEditing}
-              />
-
-              <TextInput
-                label={uiText.stream}
-                value={profile.stream}
-                onChange={(e) =>
-                  setProfile({ ...profile, stream: e.target.value })
-                }
-                readOnly={!isEditing}
-              />
-
-              <TextInput
-                label={uiText.status}
-                value={profile.experience}
-                onChange={(e) =>
-                  setProfile({ ...profile, experience: e.target.value })
-                }
-                readOnly={!isEditing}
-              />
-
-              <TextInput
-                label={uiText.skills}
-                value={profile.skills}
-                onChange={(e) =>
-                  setProfile({ ...profile, skills: e.target.value })
-                }
-                readOnly={!isEditing}
-              />
-
-              <TextInput
-                label={uiText.interests}
-                value={profile.interests}
-                onChange={(e) =>
-                  setProfile({ ...profile, interests: e.target.value })
-                }
-                readOnly={!isEditing}
-              />
-
-              <TextInput
-                label={uiText.goals}
-                value={profile.goals}
-                onChange={(e) =>
-                  setProfile({ ...profile, goals: e.target.value })
-                }
-                readOnly={!isEditing}
-              />
+              <TextInput label={uiText.educationLevel} value={profile.education} readOnly />
+              <TextInput label={uiText.stream} value={profile.stream} readOnly />
+              <TextInput label={uiText.status} value={profile.experience} readOnly />
+              <TextInput label={uiText.skills} value={profile.skills} readOnly />
+              <TextInput label={uiText.interests} value={profile.interests} readOnly />
+              <TextInput label={uiText.goals} value={profile.goals} readOnly />
             </div>
           </div>
 
