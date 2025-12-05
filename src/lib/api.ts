@@ -1,5 +1,6 @@
 import { getAccessToken, getRefreshToken, saveTokens, clearTokens } from "./auth";
 
+
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:5000";
 
 // external LLM quiz service (Python API)
@@ -131,6 +132,14 @@ async function fetchDynamicQuiz(userId: string): Promise<DynamicQuizQuestion[]> 
   }));
 }
 
+export interface YouTubeVideo {
+  title: string;
+  url: string;
+  thumbnail: string;
+  videoId: string;
+  views: string;
+}
+
 export const api = {
   // ─────────── auth ───────────
   register: (body: any) =>
@@ -183,4 +192,8 @@ export const api = {
 
   // NEW: Get Graph Data
   getPathwayGraph: (id: string) => request<{ nodes: any[]; links: any[] }>(`/api/pathways/${id}/graph`),
+
+  getCourseById: (id: string) => request<any>(`/api/courses/${id}`), 
+
+  searchVideos: (query: string) => request<YouTubeVideo[]>(`/api/videos/search?q=${encodeURIComponent(query)}`),
 };

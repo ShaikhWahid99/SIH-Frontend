@@ -26,6 +26,8 @@ interface Pathway {
   jobOpportunities?: string[];
 }
 
+// ... inside pages/learner/PathwayDetailPage.tsx
+
 // Helper to convert Flat Graph Data -> Tree Hierarchy
 function buildHierarchy(nodes: any[], links: any[], rootId: string): MindmapNode | null {
   const nodeMap = new Map<string, MindmapNode>();
@@ -34,8 +36,10 @@ function buildHierarchy(nodes: any[], links: any[], rootId: string): MindmapNode
   nodes.forEach(n => {
     nodeMap.set(n.id, {
       id: n.id,
-      title: n.title || n.name || 'Unknown',
-      code: n.code, // capture code if exists for sorting
+      title: n.title || n.label || n.name || 'Unknown', // Changed to check n.label as well
+      code: n.code,
+      // === NEW: Capture the link from backend ===
+      link: n.link, 
       children: []
     });
   });
