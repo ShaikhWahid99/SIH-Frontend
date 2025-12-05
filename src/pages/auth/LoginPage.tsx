@@ -5,8 +5,7 @@ import { api } from "@/lib/api";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { TextInput } from "@/components/shared/TextInput";
-import { useToast } from "@/hooks/use-toast";
-import { translateText } from "@/lib/translate"; // ✅ API TRANSLATOR
+import { useToast } from "@/hooks/use-toast"; // ✅ API TRANSLATOR
 
 const LoginPage = () => {
   const [email, setEmail] = useState("");
@@ -34,23 +33,7 @@ const LoginPage = () => {
   const [toastErrorDesc, setToastErrorDesc] = useState("Please check your email or password.");
 
   // ✅ AUTO TRANSLATE ON LANGUAGE CHANGE
-  useEffect(() => {
-    translateText("Welcome back", lang).then(setWelcomeTitle);
-    translateText("Login to continue your learning journey", lang).then(setWelcomeDesc);
-    translateText("Email", lang).then(setEmailLabel);
-    translateText("Password", lang).then(setPasswordLabel);
-    translateText("Login", lang).then(setLoginBtn);
-    translateText("Logging in...", lang).then(setLoggingInBtn);
-    translateText("or", lang).then(setOrText);
-    translateText("Continue with Google", lang).then(setGoogleText);
-    translateText("Don't have an account?", lang).then(setNoAccountText);
-    translateText("Register here", lang).then(setRegisterText);
-
-    translateText("Welcome back!", lang).then(setToastWelcomeTitle);
-    translateText("You have successfully logged in.", lang).then(setToastWelcomeDesc);
-    translateText("Login failed", lang).then(setToastErrorTitle);
-    translateText("Please check your email or password.", lang).then(setToastErrorDesc);
-  }, [lang]);
+  
 
   const { login, refreshUser } = useAuth();
   const navigate = useNavigate();
