@@ -8,7 +8,7 @@ export interface MindmapNode {
   code?: string;
   link?: string;
   children?: MindmapNode[];
-  _hue?: number; // Internal property for coloring
+  _hue?: number;
 }
 
 interface Props {
@@ -19,6 +19,30 @@ interface Props {
 
 const randomHue = () => Math.floor(Math.random() * 360);
 
+// --- HELPER: WORD WRAPPER ---
+function wrapText(text: string, maxChars: number) {
+  const words = text.split(/\s+/);
+  let lines = [];
+  let currentLine = words[0];
+
+  for (let i = 1; i < words.length; i++) {
+    const word = words[i];
+    if (currentLine.length + 1 + word.length <= maxChars) {
+      currentLine += " " + word;
+    } else {
+      lines.push(currentLine);
+      currentLine = word;
+      if (lines.length === 5) {
+         const remaining = words.slice(i).join(" ");
+         currentLine = remaining.length > maxChars ? remaining.slice(0, maxChars) + "..." : remaining;
+         break; 
+      }
+    }
+  }
+  lines.push(currentLine);
+  return lines;
+}
+
 export default function Mindmap({
   data,
   width = 1200,
@@ -28,11 +52,9 @@ export default function Mindmap({
   const [hoveredNode, setHoveredNode] = useState<string | null>(null);
 
   /* ----------------------------------------------------------
-      1. LAYOUT + COLOR ASSIGNMENT + SORTING (VERTICAL)
+      1. LAYOUT CONFIGURATION
   ---------------------------------------------------------- */
   const root = useMemo(() => {
-    
-    // Create a safe copy and sort children
     const sortedData = {
       ...data,
       children: data.children
@@ -46,48 +68,42 @@ export default function Mindmap({
 
     const h = d3.hierarchy(sortedData);
 
-    // Assign color hues
     h.each((node: any) => {
-      if (node.depth === 0) node.data._hue = 210; // deep blue for root
+      if (node.depth === 0) node.data._hue = 210; 
       else if (node.depth === 1) node.data._hue = randomHue();
       else node.data._hue = node.parent.data._hue;
     });
 
-    // VERTICAL LAYOUT CONFIGURATION
-    // FIXED: Increased first value (Width) from 220 -> 340 to stop overlap
     const layout = d3.tree()
-      .nodeSize([340, 150]) 
-      .separation((a, b) => (a.parent === b.parent ? 1.1 : 1.3));
+      .nodeSize([140, 260]) 
+      .separation((a, b) => (a.parent === b.parent ? 1.05 : 1.15));
 
     layout(h);
     return h;
   }, [data]);
 
   /* ----------------------------------------------------------
-      2. ZOOM + PAN
+      2. ZOOM + CENTER
   ---------------------------------------------------------- */
   useEffect(() => {
     const svg = d3.select(svgRef.current);
     const g = svg.select(".mindmap-group");
 
     const zoom = d3.zoom()
-      .scaleExtent([0.1, 2]) // Limit zoom levels
+      .scaleExtent([0.1, 4])
       .filter((event) => event.type !== "click")
       .on("zoom", (ev) => g.attr("transform", ev.transform));
 
     // @ts-ignore
     svg.call(zoom);
-    
-    // Initial Center: Translate to horizontal center, and slightly down from top
     // @ts-ignore
-    svg.call(zoom.transform, d3.zoomIdentity.translate(width / 2, 100).scale(0.8));
-  }, [width, height]);
+    svg.call(zoom.transform, d3.zoomIdentity.translate(120, height / 2).scale(0.8));
+    
+  }, [width, height, data]);
 
-  // VERTICAL LINK GENERATOR
-  // x accessor returns d.x (horizontal pos), y accessor returns d.y (vertical pos)
-  const curve = d3.linkVertical()
-    .x((d: any) => d.x)
-    .y((d: any) => d.y);
+  const curve = d3.linkHorizontal()
+    .x((d: any) => d.y)
+    .y((d: any) => d.x);
 
   /* ----------------------------------------------------------
       3. RENDER
@@ -98,10 +114,7 @@ export default function Mindmap({
       width={width}
       height={height}
       className="w-full h-full border rounded-xl bg-slate-50"
-      style={{
-        cursor: "grab",
-        fontFamily: "Inter, sans-serif",
-      }}
+      style={{ cursor: "grab", fontFamily: "Inter, sans-serif" }}
     >
       <defs>
         <filter id="node-shadow">
@@ -110,8 +123,7 @@ export default function Mindmap({
       </defs>
 
       <g className="mindmap-group">
-
-        {/* ======================= GRADIENTS FOR EDGES ======================= */}
+        {/* EDGES */}
         <defs>
           {root.links().map((link: any, i: number) => {
             const hue = link.target.data._hue;
@@ -121,10 +133,8 @@ export default function Mindmap({
                 key={id}
                 id={id}
                 gradientUnits="userSpaceOnUse"
-                x1={link.source.x}
-                y1={link.source.y}
-                x2={link.target.x}
-                y2={link.target.y}
+                x1={link.source.y} y1={link.source.x}
+                x2={link.target.y} y2={link.target.x}
               >
                 <stop offset="0%" stopColor={`hsl(${hue}, 80%, 35%)`} stopOpacity="1" />
                 <stop offset="50%" stopColor={`hsl(${hue}, 80%, 45%)`} stopOpacity="0.9" />
@@ -134,12 +144,9 @@ export default function Mindmap({
           })}
         </defs>
 
-        {/* ======================= EDGES ======================= */}
         {root.links().map((link: any, i: number) => {
           const id = `edgegrad-${i}`;
-          // Thicker lines near root
-          const thickness = Math.max(2, 8 - link.target.depth * 2);
-
+          const thickness = Math.max(2, 6 - link.target.depth);
           return (
             <path
               key={i}
@@ -149,54 +156,40 @@ export default function Mindmap({
               strokeWidth={thickness}
               strokeLinecap="round"
               strokeLinejoin="round"
-              style={{
-                filter: "drop-shadow(0px 1px 1px rgba(0,0,0,0.1))",
-              }}
+              style={{ filter: "drop-shadow(0px 1px 1px rgba(0,0,0,0.1))" }}
             />
           );
         })}
 
-        {/* ======================= NODES ======================= */}
+        {/* NODES */}
         {root.descendants().map((node: any, i: number) => {
-          // VERTICAL: Use (x, y) directly
-          const { x, y } = node;
+          const x = node.y; 
+          const y = node.x; 
           const { title, link } = node.data;
-
           const isRoot = node.depth === 0;
           const nodeId = `n-${i}`;
           const isHovered = hoveredNode === nodeId;
-          const anchor = "middle"; 
 
-          // --- FIXED: TITLE SPLITTING LOGIC ---
-          // Split title if it's long (e.g. > 25 chars)
-          let lines = [title];
-          if (title.length > 28) {
-             const mid = Math.floor(title.length / 2);
-             // try to find a space near the middle
-             const spaceIdx = title.lastIndexOf(" ", mid + 5);
-             if (spaceIdx > 10) {
-               lines = [title.slice(0, spaceIdx), title.slice(spaceIdx + 1)];
-             } else {
-               // Force split if no suitable space
-               lines = [title.slice(0, mid), title.slice(mid)];
-             }
-          }
-
-          // Adjust box size based on line count
-          const isMultiLine = lines.length > 1;
+          // --- 1. WRAP TEXT ---
+          const maxChars = isRoot ? 22 : 24; 
+          const lines = wrapText(title, maxChars);
           
-          // Calculate approximate text width for pill size (based on longest line)
-          const longestLine = lines.reduce((a, b) => a.length > b.length ? a : b, "");
-          const charWidth = 9; 
-          const textWidth = Math.max(120, longestLine.length * charWidth + 30);
+          // --- 2. SIZING CONFIG ---
+          // Increase Line Height for readability (1.2x font size)
+          const fontSize = isRoot ? 16 : 13;
+          const lineHeight = fontSize * 1.3; 
           
-          const rectWidth = isRoot ? 280 : textWidth;
-          // Taller box if multi-line
-          const rectHeight = isRoot ? 70 : (isMultiLine ? 55 : 40); 
+          const verticalPadding = isRoot ? 26 : 22; 
+          const horizontalPadding = isRoot ? 32 : 24; 
           
-          // Center the rect on the node's x,y
-          const rectX = -(rectWidth / 2);
-          const rectY = -(rectHeight / 2);
+          const longestLineChars = lines.reduce((max, line) => Math.max(max, line.length), 0);
+          
+          // Width Multipliers
+          const charWidth = isRoot ? 10.5 : 8; 
+          const minWidth = 100;
+          
+          const rectWidth = Math.max(minWidth, longestLineChars * charWidth + horizontalPadding);
+          const rectHeight = (lines.length * lineHeight) + verticalPadding;
 
           return (
             <g
@@ -210,42 +203,47 @@ export default function Mindmap({
               }}
               style={{ cursor: link ? "pointer" : "default" }}
             >
-
-              {/* ===== NODE BOX ===== */}
               <rect
-                x={rectX}
-                y={rectY}
+                x={-rectWidth / 2}
+                y={-rectHeight / 2}
                 width={rectWidth}
                 height={rectHeight}
-                rx={isRoot ? 10 : 20}
+                rx={isRoot ? 10 : 6}
                 fill={isRoot ? "#1e293b" : "white"}
-                stroke={isHovered ? "#3b82f6" : "transparent"} // hover blue
+                stroke={isHovered ? "#3b82f6" : "transparent"}
                 strokeWidth={2}
                 filter="url(#node-shadow)"
-                style={{ transition: "150ms" }}
+                style={{ transition: "all 200ms ease" }}
               />
 
-              {/* ===== NODE TEXT (Supports 2 Lines) ===== */}
               <text
-                dy={isMultiLine ? "-0.2em" : "0.35em"} // shift up slightly if 2 lines
-                textAnchor={anchor}
+                textAnchor="middle"
+                // dominantBaseline="central" helps align vertically
+                dominantBaseline="middle" 
                 style={{
-                  fontSize: isRoot ? "18px" : "14px",
+                  fontSize: `${fontSize}px`,
                   fontWeight: isRoot ? 700 : 500,
                   fill: isRoot ? "white" : link ? "#2563eb" : "#1e293b",
                   textDecoration: link && isHovered ? "underline" : "none",
                   pointerEvents: "none",
                 }}
               >
-                {lines.map((line, idx) => (
-                  <tspan 
-                    key={idx} 
-                    x="0" 
-                    dy={idx === 0 ? "0" : "1.2em"} // Second line drops down
-                  >
-                    {line}
-                  </tspan>
-                ))}
+                {lines.map((line, idx) => {
+                    // CALCULATE EXACT Y for each line relative to center (0)
+                    // Formula: (index - middleIndex) * lineHeight
+                    const middleIndex = (lines.length - 1) / 2;
+                    const lineY = (idx - middleIndex) * lineHeight;
+                    
+                    return (
+                      <tspan
+                        key={idx}
+                        x="0"
+                        y={lineY} // Explicit Y position ensures perfect centering
+                      >
+                        {line}
+                      </tspan>
+                    );
+                })}
               </text>
             </g>
           );
