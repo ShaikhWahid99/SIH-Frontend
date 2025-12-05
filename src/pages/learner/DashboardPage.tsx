@@ -4,12 +4,35 @@ import { PathwayCard } from '@/components/shared/PathwayCard';
 import { ProgressBar } from '@/components/shared/ProgressBar';
 import { Sparkles, TrendingUp, Target, RefreshCw } from 'lucide-react';
 import { pathways } from '@/data/dummyData';
+import { useEffect, useState } from 'react';
+import { api } from '@/lib/api';
 import { Link } from 'react-router-dom';
 
 const DashboardPage = () => {
-  const recommendedPathway = pathways[0];
-  const alternativePathways = pathways.slice(1, 3);
+  const [recommendedPathway, setRecommendedPathway] = useState(pathways[0]);
+  const [alternativePathways, setAlternativePathways] = useState(pathways.slice(1, 3));
   const overallProgress = 35; // Dummy progress
+
+  useEffect(() => {
+    let mounted = true;
+    api
+      .getRecommendations()
+      .then((res) => {
+        const items = Array.isArray(res?.items) ? res.items : [];
+        if (!items.length) return;
+        if (!mounted) return;
+        const first = items[0];
+        const rest = items.slice(1, 3);
+        setRecommendedPathway(first);
+        if (rest.length) setAlternativePathways(rest);
+      })
+      .catch(() => {
+        // keep dummy data on error
+      });
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   return (
     <div className="space-y-8">

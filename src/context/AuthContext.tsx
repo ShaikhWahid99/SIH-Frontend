@@ -8,6 +8,7 @@ interface UserType {
   displayName: string;
   onboarded: boolean;
   quizCompleted: boolean;
+  dynamicQuizCompleted?: boolean;
   userDetails: any | null;
 }
 

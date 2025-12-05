@@ -205,4 +205,7 @@ export const api = {
 
   // google oauth start url
   startGoogle: () => `${API_BASE}/auth/google`,
+
+  // ─────────── recommendations (Neo4j) ───────────
+  getRecommendations: () => request<{ items: any[] }>("/api/recommendations"),
 };

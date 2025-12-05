@@ -42,7 +42,7 @@ const LoginPage = () => {
         return;
       }
 
-      if (!me.quizCompleted) {
+      if (!me.quizCompleted && !me.dynamicQuizCompleted) {
         navigate("/quiz", { replace: true });
         return;
       }

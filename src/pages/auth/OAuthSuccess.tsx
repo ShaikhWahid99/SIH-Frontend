@@ -36,7 +36,7 @@ const OAuthSuccessPage = () => {
           return;
         }
 
-        if (!me.quizCompleted) {
+        if (!me.quizCompleted && !me.dynamicQuizCompleted) {
           navigate("/quiz", { replace: true });
           return;
         }
