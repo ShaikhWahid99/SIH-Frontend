@@ -4,17 +4,112 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { TagChip } from '@/components/shared/TagChip';
 import { ProgressBar } from '@/components/shared/ProgressBar';
-import { ArrowLeft, Clock, GraduationCap, Briefcase, CheckCircle, Circle } from 'lucide-react';
-import { pathways } from '@/data/dummyData';
+import Mindmap from '@/components/shared/Mindmap';
+import type { MindmapNode } from '@/components/shared/Mindmap';
+import { ArrowLeft, Clock, GraduationCap, Briefcase, Calendar, CheckCircle, Circle, Loader2, GitGraph } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { api } from '@/lib/api';
+
+interface Pathway {
+  id: string;
+  title: string;
+  nqrCode?: string;
+  description: string;
+  duration: string;
+  nsqfLevel: number;
+  sector: string;
+  validTill?: string;
+  mode: string;
+  skillDemand: string;
+  tags: string[];
+  steps?: any[];
+  jobOpportunities?: string[];
+}
+
+// Helper to convert Flat Graph Data -> Tree Hierarchy
+function buildHierarchy(nodes: any[], links: any[], rootId: string): MindmapNode | null {
+  const nodeMap = new Map<string, MindmapNode>();
+
+  // 1. Create all node objects
+  nodes.forEach(n => {
+    nodeMap.set(n.id, {
+      id: n.id,
+      title: n.title || n.name || 'Unknown',
+      code: n.code, // capture code if exists for sorting
+      children: []
+    });
+  });
+
+  // 2. Build relationships
+  links.forEach(l => {
+    const parent = nodeMap.get(l.source);
+    const child = nodeMap.get(l.target);
+    if (parent && child) {
+      parent.children?.push(child);
+    }
+  });
+
+  // 3. Return the root node
+  return nodeMap.get(rootId) || null;
+}
 
 const PathwayDetailPage = () => {
   const { id } = useParams();
-  const pathway = pathways.find((p) => p.id === id);
+  const [pathway, setPathway] = useState<Pathway | null>(null);
+  const [graphData, setGraphData] = useState<MindmapNode | null>(null); // State for Mindmap
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  if (!pathway) {
+  useEffect(() => {
+    if (!id) return;
+
+    // 1. Fetch Pathway Details
+    api.getPathwayById(id)
+      .then((data) => {
+        setPathway({
+          ...data,
+          mode: data.mode || 'Online', 
+          steps: data.steps || [
+             { title: 'Introduction', provider: 'Internal', duration: '2h', nsqfLevel: 1, mode: 'Online' },
+             { title: 'Core Concepts', provider: 'Internal', duration: '4h', nsqfLevel: 2, mode: 'Online' }
+          ],
+          jobOpportunities: data.jobOpportunities || ['Data Analyst', 'Junior Developer'] 
+        });
+        
+        // 2. Fetch Graph Data (After details load, to ensure we have the ID context)
+        return api.getPathwayGraph(id);
+      })
+      .then((res) => {
+        // Convert flat graph to hierarchy
+        if (res && res.nodes && res.nodes.length > 0) {
+          const rootNodeId = id; // The current pathway ID is the root
+          // Fallback: If ID mismatch in graph (rare), find node with type='root' or just first one
+          const hierarchy = buildHierarchy(res.nodes, res.links, rootNodeId);
+          setGraphData(hierarchy);
+        }
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error(err);
+        // Don't fail the whole page if graph fails, just show error in console or handle gracefully
+        if (!pathway) setError('Failed to load pathway');
+        setLoading(false);
+      });
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (error || !pathway) {
     return (
       <div className="text-center py-12">
         <h2 className="text-2xl font-bold text-foreground mb-4">Pathway not found</h2>
+        <p className="text-muted-foreground mb-6">{error}</p>
         <Link to="/learner/pathways">
           <Button>Back to Pathways</Button>
         </Link>
@@ -22,8 +117,9 @@ const PathwayDetailPage = () => {
     );
   }
 
-  const completedSteps = 2; // Dummy data
-  const progress = (completedSteps / pathway.steps.length) * 100;
+  const completedSteps = 0; 
+  const totalSteps = pathway.steps?.length || 1; 
+  const progress = (completedSteps / totalSteps) * 100;
 
   return (
     <div className="space-y-6">
@@ -34,12 +130,20 @@ const PathwayDetailPage = () => {
           Back to Pathways
         </Link>
         
-        <div className="flex items-start justify-between">
-          <div className="space-y-3 flex-1">
+        <div className="space-y-3 flex-1">
             <div className="flex items-center gap-3 flex-wrap">
               <h1 className="text-3xl font-bold text-foreground">{pathway.title}</h1>
-              <Badge className="bg-success text-success-foreground">{pathway.skillDemand} Demand</Badge>
+              {pathway.skillDemand && (
+                 <Badge className="bg-success text-success-foreground">{pathway.skillDemand}</Badge>
+              )}
             </div>
+
+            {pathway.nqrCode && (
+              <div className="text-xs font-medium text-muted-foreground bg-muted/50 px-2 py-1 rounded w-fit">
+                NQR Code: {pathway.nqrCode}
+              </div>
+            )}
+
             <p className="text-lg text-muted-foreground">{pathway.description}</p>
             <div className="flex flex-wrap gap-2">
               {pathway.tags.map((tag) => (
@@ -47,7 +151,6 @@ const PathwayDetailPage = () => {
               ))}
             </div>
           </div>
-        </div>
       </div>
 
       {/* Key Info */}
@@ -59,6 +162,7 @@ const PathwayDetailPage = () => {
           </div>
           <p className="text-lg font-bold text-foreground">{pathway.duration}</p>
         </Card>
+        
         <Card className="p-4">
           <div className="flex items-center gap-2 text-muted-foreground mb-1">
             <GraduationCap className="w-4 h-4" />
@@ -66,33 +170,53 @@ const PathwayDetailPage = () => {
           </div>
           <p className="text-lg font-bold text-foreground">Level {pathway.nsqfLevel}</p>
         </Card>
+        
         <Card className="p-4">
           <div className="flex items-center gap-2 text-muted-foreground mb-1">
             <Briefcase className="w-4 h-4" />
-            <span className="text-sm">Mode</span>
+            <span className="text-sm">Sector</span>
           </div>
-          <p className="text-lg font-bold text-foreground">{pathway.mode}</p>
+          <p className="text-lg font-bold text-foreground truncate" title={pathway.sector}>
+            {pathway.sector}
+          </p>
         </Card>
+        
         <Card className="p-4">
           <div className="flex items-center gap-2 text-muted-foreground mb-1">
-            <Circle className="w-4 h-4" />
-            <span className="text-sm">Progress</span>
+            <Calendar className="w-4 h-4" />
+            <span className="text-sm">Valid Till</span>
           </div>
-          <p className="text-lg font-bold text-foreground">{Math.round(progress)}%</p>
+          <p className="text-lg font-bold text-foreground">{pathway.validTill || 'N/A'}</p>
         </Card>
       </div>
+
+      {/* NEW SECTION: Learning Graph (Vertical) */}
+      {graphData && (
+        <Card className="p-6 overflow-hidden">
+          <div className="flex items-center gap-2 mb-4">
+            <GitGraph className="w-6 h-6 text-primary" />
+            <h2 className="text-xl font-bold text-foreground">Module Map</h2>
+          </div>
+          <p className="text-sm text-muted-foreground mb-4">
+            Explore the connections between modules in this qualification. Scroll to zoom, drag to pan.
+          </p>
+          <div className="h-[600px] border rounded-lg bg-slate-50 relative">
+             <Mindmap data={graphData} width={1000} height={600} />
+          </div>
+        </Card>
+      )}
 
       {/* Progress */}
       <Card className="p-6">
         <h2 className="text-xl font-bold text-foreground mb-4">Your Progress</h2>
-        <ProgressBar value={progress} label={`${completedSteps} of ${pathway.steps.length} steps completed`} />
+        <ProgressBar value={progress} label={`${completedSteps} of ${totalSteps} steps completed`} />
       </Card>
 
       {/* Learning Path Timeline */}
       <Card className="p-6">
         <h2 className="text-xl font-bold text-foreground mb-6">Learning Path</h2>
         <div className="space-y-4">
-          {pathway.steps.map((step, index) => {
+          {pathway.steps?.map((step, index) => {
             const isCompleted = index < completedSteps;
             const isCurrent = index === completedSteps;
 
@@ -110,7 +234,7 @@ const PathwayDetailPage = () => {
                   >
                     {isCompleted ? <CheckCircle className="w-5 h-5" /> : index + 1}
                   </div>
-                  {index < pathway.steps.length - 1 && (
+                  {index < (pathway.steps?.length || 0) - 1 && (
                     <div className={`w-1 h-full ${isCompleted ? 'bg-success' : 'bg-muted'}`} />
                   )}
                 </div>
@@ -153,7 +277,7 @@ const PathwayDetailPage = () => {
       <Card className="p-6">
         <h2 className="text-xl font-bold text-foreground mb-4">Job Opportunities</h2>
         <div className="grid md:grid-cols-2 gap-4">
-          {pathway.jobOpportunities.map((job, index) => (
+          {pathway.jobOpportunities?.map((job, index) => (
             <Card key={index} className="p-4 bg-muted/30">
               <div className="flex items-center gap-2">
                 <Briefcase className="w-5 h-5 text-primary" />
