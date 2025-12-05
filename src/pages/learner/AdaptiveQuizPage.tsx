@@ -56,7 +56,7 @@ const AdaptiveQuizPage = () => {
   >("idle");
   const [streamResult, setStreamResult] = useState<any>(null);
 
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -199,6 +199,8 @@ const AdaptiveQuizPage = () => {
         dynamicQuizCompleted: true,
         dynamicQuizCompletedAt: new Date().toISOString(),
       });
+
+      await refreshUser();
 
       // toast({
       //   title: "Curriculum generated",

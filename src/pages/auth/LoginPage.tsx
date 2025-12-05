@@ -71,8 +71,16 @@ const LoginPage = () => {
         description: toastWelcomeDesc,
       });
 
-      if (!me.onboarded) return navigate("/onboarding", { replace: true });
-      if (!me.quizCompleted) return navigate("/quiz", { replace: true });
+      // Decide where to go next
+      if (!me.onboarded) {
+        navigate("/onboarding", { replace: true });
+        return;
+      }
+
+      if (!me.quizCompleted) {
+        navigate("/quiz", { replace: true });
+        return;
+      }
 
       navigate("/learner/dashboard", { replace: true });
     } catch (err) {

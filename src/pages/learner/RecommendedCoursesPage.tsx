@@ -109,9 +109,12 @@
 
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { PathwayCard } from "@/components/shared/PathwayCard";
+import { PathwayCard, PathwayCardProps } from "@/components/shared/PathwayCard";
 import { Link } from "react-router-dom";
 import { Sparkles } from "lucide-react";
+import { useEffect, useState } from "react";
+import { api } from "@/lib/api";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const recommendedCourses = [
     {
@@ -183,7 +186,52 @@ const recommendedCourses = [
     },
 ];
 
+function normalize(item: unknown): PathwayCardProps {
+    const obj = (item ?? {}) as Record<string, unknown>;
+    const totalHours = obj.total_hours as string | number | undefined;
+    const tags = Array.isArray(obj.tags) ? (obj.tags as string[]) : [];
+    const durationRaw = obj.duration as string | undefined;
+    const duration = durationRaw ?? (totalHours != null ? `${totalHours} hours` : "N/A");
+    const skillDemand = typeof obj.skillDemand === "string" ? (obj.skillDemand as string) : undefined;
+
+    return {
+        id: String(obj.id ?? ""),
+        title: String(obj.title ?? obj.name ?? "Untitled Pathway"),
+        description: String(obj.description ?? ""),
+        duration,
+        nsqfLevel: Number(obj.nsqfLevel ?? 0),
+        sector: String(obj.sector ?? "General"),
+        tags,
+        skillDemand,
+    };
+}
+
 const RecommendedCoursesPage = () => {
+    const [items, setItems] = useState<PathwayCardProps[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    // Fetch recommendations asynchronously and then take items 4–10;
+    // this update triggers a re-render, replacing the initial static cards.
+    useEffect(() => {
+        let mounted = true;
+        api
+            .getRecommendations()
+            .then((res) => {
+                const recs = Array.isArray(res?.items) ? res.items : [];
+                if (!mounted) return;
+                const seven = recs.slice(3, 10).map(normalize);
+                setItems(seven);
+                setLoading(false);
+            })
+            .catch(() => {
+                setItems(recommendedCourses);
+                setLoading(false);
+            });
+        return () => {
+            mounted = false;
+        };
+    }, []);
+
     return (
         <div className="space-y-8">
 
@@ -193,11 +241,11 @@ const RecommendedCoursesPage = () => {
                     <div>
                         <div className="flex items-center gap-3">
                             <Sparkles className="w-6 h-6" />
-                            <h1 className="text-3xl font-bold">Relevant Courses</h1>
+                            <h1 className="text-3xl font-bold">Relevant Qualifications</h1>
                         </div>
 
                         <p className="text-white/90 text-lg mt-2">
-                            Personalized courses selected for you.
+                            Personalized paths selected for you.
                         </p>
                     </div>
 
@@ -214,9 +262,24 @@ const RecommendedCoursesPage = () => {
 
             {/* Courses Grid */}
             <div className="grid md:grid-cols-2 gap-6">
-                {recommendedCourses.map((course) => (
-                    <PathwayCard key={course.id} {...course} />
-                ))}
+                {loading ? (
+                    Array.from({ length: 7 }).map((_, i) => (
+                        <Card key={i} className="p-6">
+                            <div className="space-y-4">
+                                <div className="flex items-center justify-between mb-2">
+                                    <Skeleton className="h-6 w-40" />
+                                    <Skeleton className="h-4 w-20" />
+                                </div>
+                                <Skeleton className="h-4 w-24" />
+                                <Skeleton className="h-10 w-full" />
+                            </div>
+                        </Card>
+                    ))
+                ) : (
+                    items.map((course) => (
+                        <PathwayCard key={course.id} {...course} />
+                    ))
+                )}
             </div>
 
         </div>

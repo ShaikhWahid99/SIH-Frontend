@@ -16,7 +16,9 @@ const ProtectedRoute = ({
     return <Navigate to="/onboarding" replace />;
 
   if (requireQuiz && !user.quizCompleted)
-    return <Navigate to="/quiz" replace />;
+    return user.dynamicQuizCompleted
+      ? children
+      : <Navigate to="/quiz" replace />;
 
   return children;
 };
