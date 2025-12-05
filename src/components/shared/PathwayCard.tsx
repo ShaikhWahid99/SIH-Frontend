@@ -4,7 +4,7 @@ import { Clock, TrendingUp, ArrowRight } from 'lucide-react';
 import { TagChip } from './TagChip';
 import { Link } from 'react-router-dom';
 
-interface PathwayCardProps {
+export interface PathwayCardProps {
   id: string;
   title: string;
   description: string;

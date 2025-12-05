@@ -1,16 +1,37 @@
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { PathwayCard } from '@/components/shared/PathwayCard';
+import { PathwayCard, PathwayCardProps } from '@/components/shared/PathwayCard';
 import { ProgressBar } from '@/components/shared/ProgressBar';
 import { Sparkles, TrendingUp, Target, RefreshCw } from 'lucide-react';
 import { pathways } from '@/data/dummyData';
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import { Link } from 'react-router-dom';
+import { Skeleton } from '@/components/ui/skeleton';
+
+function normalize(item: unknown): PathwayCardProps {
+  const obj = (item ?? {}) as Record<string, unknown>;
+  const totalHours = obj.total_hours as string | number | undefined;
+  const tags = Array.isArray(obj.tags) ? (obj.tags as string[]) : [];
+  const durationRaw = obj.duration as string | undefined;
+  const duration = durationRaw ?? (totalHours != null ? `${totalHours} hours` : 'N/A');
+  const skillDemand = typeof obj.skillDemand === 'string' ? (obj.skillDemand as string) : undefined;
+
+  return {
+    id: String(obj.id ?? ''),
+    title: String(obj.title ?? obj.name ?? 'Untitled Pathway'),
+    description: String(obj.description ?? ''),
+    duration,
+    nsqfLevel: Number(obj.nsqfLevel ?? 0),
+    sector: String(obj.sector ?? 'General'),
+    tags,
+    skillDemand,
+  };
+}
 
 const DashboardPage = () => {
-  const [recommendedPathway, setRecommendedPathway] = useState(pathways[0]);
-  const [alternativePathways, setAlternativePathways] = useState(pathways.slice(1, 3));
+  const [recommendedPathway, setRecommendedPathway] = useState<PathwayCardProps | null>(null);
+  const [alternativePathways, setAlternativePathways] = useState<PathwayCardProps[]>([]);
   const overallProgress = 35; // Dummy progress
 
   useEffect(() => {
@@ -21,13 +42,14 @@ const DashboardPage = () => {
         const items = Array.isArray(res?.items) ? res.items : [];
         if (!items.length) return;
         if (!mounted) return;
-        const first = items[0];
-        const rest = items.slice(1, 3);
+        const first = normalize(items[0]);
+        const rest = items.slice(1, 3).map(normalize);
         setRecommendedPathway(first);
-        if (rest.length) setAlternativePathways(rest);
+        setAlternativePathways(rest);
       })
       .catch(() => {
-        // keep dummy data on error
+        setRecommendedPathway(normalize(pathways[0]));
+        setAlternativePathways(pathways.slice(1, 3).map(normalize));
       });
     return () => {
       mounted = false;
@@ -87,22 +109,54 @@ const DashboardPage = () => {
           <Target className="w-5 h-5 text-primary" />
           <h2 className="text-2xl font-bold text-foreground">Recommended for You</h2>
         </div>
-        <PathwayCard {...recommendedPathway} />
-        <div className="mt-4 flex gap-3">
-          <Link to={`/learner/pathways/${recommendedPathway.id}`} className="flex-1">
-            <Button className="w-full" size="lg">Start Learning</Button>
-          </Link>
-          <Button variant="outline" size="lg">View All Pathways</Button>
-        </div>
+        {recommendedPathway ? (
+          <PathwayCard {...recommendedPathway} />
+        ) : (
+          <Card className="p-6">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between mb-2">
+                <Skeleton className="h-6 w-40" />
+                <Skeleton className="h-4 w-20" />
+              </div>
+              <Skeleton className="h-4 w-24" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+          </Card>
+        )}
+        {recommendedPathway ? (
+          <div className="mt-4 flex gap-3">
+            <Link to={`/learner/pathways/${recommendedPathway.id}`} className="flex-1">
+              <Button className="w-full" size="lg">Start Learning</Button>
+            </Link>
+            <Button variant="outline" size="lg">View All Pathways</Button>
+          </div>
+        ) : (
+          <div className="mt-4 flex gap-3">
+            <Button className="flex-1" size="lg" disabled>Start Learning</Button>
+            <Button variant="outline" size="lg" disabled>View All Pathways</Button>
+          </div>
+        )}
       </div>
 
       {/* Alternative Pathways */}
       <div>
         <h2 className="text-2xl font-bold text-foreground mb-4">Alternative Pathways</h2>
         <div className="grid md:grid-cols-2 gap-6">
-          {alternativePathways.map((pathway) => (
-            <PathwayCard key={pathway.id} {...pathway} />
-          ))}
+          {alternativePathways.length ? (
+            alternativePathways.map((pathway) => (
+              <PathwayCard key={pathway.id} {...pathway} />
+            ))
+          ) : (
+            [0, 1].map((i) => (
+              <Card key={i} className="p-6">
+                <div className="space-y-4">
+                  <Skeleton className="h-6 w-40" />
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-10 w-full" />
+                </div>
+              </Card>
+            ))
+          )}
         </div>
       </div>
 

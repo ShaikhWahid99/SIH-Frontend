@@ -6,7 +6,7 @@ const navItems = [
   { icon: Home, label: 'Dashboard', path: '/learner/dashboard' },
   { icon: BookOpen, label: 'Pathways', path: '/learner/pathways' },
   { icon: TrendingUp, label: 'Progress', path: '/learner/progress' },
-  { icon: Layers, label: 'Relevant Courses', path: '/learner/recommended-courses' },
+  { icon: Layers, label: 'Relevant qualifications', path: '/learner/recommended-courses' },
   { icon: User, label: 'Profile', path: '/learner/profile' },
   { icon: MessageSquare, label: 'Feedback', path: '/learner/feedback' },
 ];
