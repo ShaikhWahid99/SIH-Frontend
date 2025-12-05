@@ -14,6 +14,7 @@ import { LearnerLayout } from "./layouts/LearnerLayout";
 import LandingPage from "./pages/LandingPage";
 import AboutPage from "./pages/AboutPage";
 import LoginPage from "./pages/auth/LoginPage";
+import TrainerLoginPage from "./pages/auth/TrainerLogin";
 import RegisterPage from "./pages/auth/RegisterPage";
 import OnboardingPage from "./pages/learner/OnboardingPage";
 import DashboardPage from "./pages/learner/DashboardPage";
@@ -31,8 +32,15 @@ import AdaptiveQuizPage from "./pages/learner/AdaptiveQuizPage";
 import RecommendedCoursesPage from "@/pages/learner/RecommendedCoursesPage";
 import SimilarCoursesPage from "@/pages/learner/SimilarCoursesPage";
 
+// import data from "./roadmap-test/reactRoadmap.json";
+// import RoadmapFlow from "./roadmap-test/RoadmapFlow";
+import FlowDiagram from "@/roadmap-test/flow/FlowDiagram";
+import TrainerProtectedRoute from "./components/TrainerProtectedRoute";
+import TrainerLayout from "./layouts/TrainerLayout";
+import TrainerDashboard from "./pages/Trainer/TrainerDashboard";
 
 const queryClient = new QueryClient();
+
 
 const App: React.FC = () => (
   <QueryClientProvider client={queryClient}>
@@ -49,7 +57,7 @@ const App: React.FC = () => (
             {/* AUTH PAGES */}
             <Route path="/auth/login" element={<AuthLayout><LoginPage /></AuthLayout>} />
             <Route path="/auth/register" element={<AuthLayout><RegisterPage /></AuthLayout>} />
-
+            <Route path="/auth/trainer-login" element={<AuthLayout><TrainerLoginPage /></AuthLayout>} />
             <Route
               path="/onboarding"
               element={
@@ -82,6 +90,19 @@ const App: React.FC = () => (
                 </ProtectedRoute>
               }
             />
+
+            {/* TRAINER */}
+              <Route 
+              path="/trainer/dashboard"
+              element={
+                <TrainerProtectedRoute>
+                  <TrainerLayout>
+                    <TrainerDashboard />
+                  </TrainerLayout>
+                </TrainerProtectedRoute>
+              }
+              />
+
 
             {/* ALL LEARNER ROUTES */}
             <Route

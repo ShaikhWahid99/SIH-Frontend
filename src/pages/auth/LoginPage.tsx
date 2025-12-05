@@ -54,16 +54,8 @@ const LoginPage = () => {
         description: toastWelcomeDesc,
       });
 
-      // Decide where to go next
-      if (!me.onboarded) {
-        navigate("/onboarding", { replace: true });
-        return;
-      }
-
-      if (!me.quizCompleted) {
-        navigate("/quiz", { replace: true });
-        return;
-      }
+      if (!me.onboarded) return navigate("/onboarding", { replace: true });
+      if (!me.quizCompleted) return navigate("/quiz", { replace: true });
 
       navigate("/learner/dashboard", { replace: true });
     } catch (err) {
@@ -82,16 +74,27 @@ const LoginPage = () => {
   };
 
   return (
-    <Card className="p-8 relative">
+    <Card className="p-8 w-full max-w-md relative">
 
-      {/* ✅ LANGUAGE SWITCH BUTTONS */}
+        {/* ✅ LANGUAGE SWITCH BUTTONS */}
       <div className="absolute top-4 right-4 flex gap-2">
         <button onClick={() => setLang("en")} className="border px-2 py-1 rounded">EN</button>
         <button onClick={() => setLang("hi")} className="border px-2 py-1 rounded">HI</button>
         <button onClick={() => setLang("mr")} className="border px-2 py-1 rounded">MR</button>
       </div>
+    
+      {/* --- TRAINER BUTTON --- */}
+      <Button
+        variant="outline"
+        size="sm"
+        className="absolute top-4 right-4"
+        onClick={() => navigate("/auth/trainer-login")}
+      >
+        Login as Trainer
+      </Button>
 
-      <div className="mb-6">
+      <div className="mb-6 pr-24"> 
+        {/* spacing so text doesn't overlap with the button */}
         <h1 className="text-2xl font-bold text-foreground mb-2">
           {welcomeTitle}
         </h1>

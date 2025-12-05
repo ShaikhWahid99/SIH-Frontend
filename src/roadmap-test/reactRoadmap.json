@@ -1,0 +1,142 @@
+{
+  "id": "react",
+  "title": "React Learning Path",
+  "children": [
+    {
+      "id": "js",
+      "title": "JavaScript",
+      "children": [
+        {
+          "id": "js1",
+          "title": "Basics",
+          "link": "https://youtube.com",
+          "children": [
+            { "id": "js1a", "title": "Variables", "link": "https://youtube.com" },
+            { "id": "js1b", "title": "Functions", "link": "https://youtube.com" },
+            { "id": "js1c", "title": "Loops", "link": "https://youtube.com" }
+          ]
+        },
+        {
+          "id": "js2",
+          "title": "Advanced",
+          "link": "https://youtube.com",
+          "children": [
+            { "id": "js2a", "title": "Closures", "link": "https://youtube.com" },
+            { "id": "js2b", "title": "Promises", "link": "https://youtube.com" },
+            { "id": "js2c", "title": "Async/Await", "link": "https://youtube.com" },
+            {
+              "id": "js2d",
+              "title": "ES6 Features",
+              "children": [
+                { "id": "js2d1", "title": "Arrow Functions", "link": "https://youtube.com" },
+                { "id": "js2d2", "title": "Destructuring", "link": "https://youtube.com" },
+                { "id": "js2d3", "title": "Spread & Rest", "link": "https://youtube.com" }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "react-basics",
+      "title": "React Basics",
+      "children": [
+        { "id": "jsx", "title": "JSX", "link": "https://youtube.com" },
+        { "id": "components", "title": "Components", "link": "https://youtube.com" },
+        { "id": "props", "title": "Props", "link": "https://youtube.com" },
+        {
+          "id": "state1",
+          "title": "State",
+          "children": [
+            { "id": "state1a", "title": "useState", "link": "https://youtube.com" },
+            { "id": "state1b", "title": "State Updates", "link": "https://youtube.com" }
+          ]
+        },
+        { "id": "effects", "title": "useEffect", "link": "https://youtube.com" }
+      ]
+    },
+
+    {
+      "id": "state",
+      "title": "State Management",
+      "children": [
+        {
+          "id": "zustand",
+          "title": "Zustand",
+          "link": "https://youtube.com",
+          "children": [
+            { "id": "zustand1", "title": "Store Setup", "link": "https://youtube.com" },
+            { "id": "zustand2", "title": "Selectors", "link": "https://youtube.com" }
+          ]
+        },
+        {
+          "id": "redux",
+          "title": "Redux",
+          "link": "https://youtube.com",
+          "children": [
+            { "id": "redux1", "title": "Actions", "link": "https://youtube.com" },
+            { "id": "redux2", "title": "Reducers", "link": "https://youtube.com" },
+            {
+              "id": "redux3",
+              "title": "Middlewares bklc the long form content in this sentence ",
+              "children": [
+                { "id": "redux3a", "title": "Thunk", "link": "https://youtube.com" },
+                { "id": "redux3b", "title": "Saga", "link": "https://youtube.com" }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "react-hooks",
+      "title": "React Hooks",
+      "children": [
+        { "id": "hook1", "title": "useState", "link": "https://youtube.com" },
+        { "id": "hook2", "title": "useEffect", "link": "https://youtube.com" },
+        {
+          "id": "hook3",
+          "title": "useContext",
+          "link": "https://youtube.com"
+        },
+        {
+          "id": "hook4",
+          "title": "useReducer",
+          "children": [
+            { "id": "hook4a", "title": "Reducers", "link": "https://youtube.com" },
+            { "id": "hook4b", "title": "Actions", "link": "https://youtube.com" }
+          ]
+        },
+        { "id": "hook5", "title": "useRef", "link": "https://youtube.com" },
+        { "id": "hook6", "title": "useMemo", "link": "https://youtube.com" }
+      ]
+    },
+
+    {
+      "id": "react-advanced",
+      "title": "Advanced Topics",
+      "children": [
+        { "id": "adv1", "title": "Code Splitting", "link": "https://youtube.com" },
+        { "id": "adv2", "title": "React Suspense", "link": "https://youtube.com" },
+        {
+          "id": "adv3",
+          "title": "Performance Optimization",
+          "children": [
+            { "id": "adv3a", "title": "Memoization", "link": "https://youtube.com" },
+            { "id": "adv3b", "title": "Virtualization", "link": "https://youtube.com" }
+          ]
+        },
+        {
+          "id": "adv4",
+          "title": "Testing",
+          "children": [
+            { "id": "adv4a", "title": "Jest", "link": "https://youtube.com" },
+            { "id": "adv4b", "title": "React Testing Library", "link": "https://youtube.com" }
+          ]
+        }
+      ]
+    }
+  ]
+}
