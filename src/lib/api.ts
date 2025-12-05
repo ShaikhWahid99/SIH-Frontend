@@ -14,6 +14,7 @@ import {
 
 
 
+
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:5000";
 
 // external LLM quiz service (Python API)
@@ -33,7 +34,7 @@ export interface DynamicQuizApiResponse {
 }
 
 export interface DynamicQuizQuestion {
-  id: string;       
+  id: string;
   question: string;
   options: string[];
 }
@@ -179,7 +180,6 @@ export interface YouTubeVideo {
   views: string;
 }
 
-  // ─────────── auth ───────────
 // ---------------------------------------------------------
 // TRAINER REQUEST WRAPPER
 // ---------------------------------------------------------
@@ -250,7 +250,7 @@ async function trainerRefreshSession() {
 // EXPORTED API
 // ---------------------------------------------------------
 export const api = {
-  // learner auth
+  // ─────────── learner auth ───────────
   register: (body: any) =>
     request("/auth/register", {
       method: "POST",
@@ -284,7 +284,7 @@ export const api = {
       body: JSON.stringify(body),
     }),
 
-  // trainer auth
+  // ─────────── trainer auth ───────────
   trainerLogin: (body: any) =>
     trainerRequest("/trainer/login", {
       method: "POST",
@@ -333,7 +333,7 @@ export const api = {
 
   getCourseById: (id: string) => request<any>(`/api/courses/${id}`), 
 
-  // ✅ NEW: Skill India Recommendations
+  // ✅ NEW: Skill India Recommendations (Your feature)
   getSkillIndiaCourses: (id: string) => request<any[]>(`/api/recommendations/skill-india/${id}`),
 
   searchVideos: (query: string) => request<YouTubeVideo[]>(`/api/videos/search?q=${encodeURIComponent(query)}`),
