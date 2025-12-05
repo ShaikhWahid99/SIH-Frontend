@@ -14,7 +14,7 @@ const DashboardPage = () => {
   return (
     <div className="space-y-8">
       {/* Welcome Banner */}
-      <Card className="p-8 bg-gradient-to-r from-primary to-secondary text-white">
+      {/* <Card className="p-8 bg-gradient-to-r from-primary to-secondary text-white">
         <div className="flex items-start justify-between">
           <div className="space-y-2">
             <div className="flex items-center gap-2">
@@ -30,10 +30,10 @@ const DashboardPage = () => {
             Regenerate Path
           </Button>
         </div>
-      </Card>
+      </Card> */}
 
       {/* Progress Overview */}
-      <Card className="p-6">
+      {/* <Card className="p-6">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <TrendingUp className="w-5 h-5 text-primary" />
@@ -56,7 +56,7 @@ const DashboardPage = () => {
             <div className="text-sm text-muted-foreground">Remaining</div>
           </div>
         </div>
-      </Card>
+      </Card> */}
 
       {/* Recommended Pathway */}
       <div>
