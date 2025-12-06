@@ -6,6 +6,7 @@ import { TagChip } from '@/components/shared/TagChip';
 import { ProgressBar } from '@/components/shared/ProgressBar';
 import Mindmap from '@/components/shared/Mindmap';
 import type { MindmapNode } from '@/components/shared/Mindmap';
+import { ModuleTimeline } from '@/components/shared/ModuleTimeline';
 import {
   ArrowLeft,
   Clock,
@@ -14,7 +15,9 @@ import {
   Calendar,
   CheckCircle,
   Loader2,
-  GitGraph
+  GitGraph,
+  List,       // ✅ IMPORT ICONS
+  LayoutGrid
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
@@ -68,7 +71,12 @@ const PathwayDetailPage = () => {
   const { lang, translate } = useLanguage(); // ✅ GLOBAL LANGUAGE
 
   const [pathway, setPathway] = useState<Pathway | null>(null);
+  // ✅ STATE FOR VIEW TOGGLE
+  const [viewMode, setViewMode] = useState<'graph' | 'list'>('graph');
+  
+  // ✅ STATE FOR DATA
   const [graphData, setGraphData] = useState<MindmapNode | null>(null);
+  const [flatModules, setFlatModules] = useState<any[]>([]); // Store raw list for Timeline
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -120,7 +128,7 @@ const PathwayDetailPage = () => {
     };
   }, [lang]);
 
-  // ✅ FETCH DATA (UNCHANGED)
+// FETCH DATA
   useEffect(() => {
     if (!id) return;
 
@@ -129,18 +137,29 @@ const PathwayDetailPage = () => {
         setPathway({
           ...data,
           mode: data.mode || 'Online',
-          steps: data.steps || [
-            { title: 'Introduction', provider: 'Internal', duration: '2h', nsqfLevel: 1, mode: 'Online' }
-          ],
+          steps: data.steps || [],
           jobOpportunities: data.jobOpportunities || ['Data Analyst']
         });
-
         return api.getPathwayGraph(id);
       })
       .then((res) => {
         if (res?.nodes?.length) {
+          // 1. Build Hierarchy for Graph View (Unchanged)
           const hierarchy = buildHierarchy(res.nodes, res.links, id);
           setGraphData(hierarchy);
+
+          // 2. List Logic (UPDATED)
+          const modules = res.nodes
+            // ✅ FILTER: Exclude the node that matches the current Page ID (the Root)
+            .filter((n: any) => n.id !== id) 
+            .map((n: any) => ({
+               id: n.id,
+               title: n.title || n.label || n.name,
+               code: n.code,
+               link: n.link
+            }));
+            
+          setFlatModules(modules);
         }
         setLoading(false);
       })
@@ -149,14 +168,6 @@ const PathwayDetailPage = () => {
         setLoading(false);
       });
   }, [id]);
-
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
-  }
 
   if (error || !pathway) {
     return (
@@ -209,15 +220,50 @@ const PathwayDetailPage = () => {
         </Card>
       </div>
 
-      {/* ✅ MODULE MAP */}
+{/* ✅ MODULE MAP SECTION */}
       {graphData && (
         <Card className="p-6">
-          <h2 className="text-xl font-bold mb-2">
-            <GitGraph className="inline w-5 h-5" /> {uiText.moduleMap}
-          </h2>
-          <p className="text-sm text-muted-foreground">{uiText.explore}</p>
-          <div className="h-[600px] mt-4">
-            <Mindmap data={graphData} width={1000} height={600} />
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
+            <div>
+              <h2 className="text-xl font-bold flex items-center gap-2">
+                {viewMode === 'graph' ? <GitGraph className="w-5 h-5" /> : <List className="w-5 h-5" />} 
+                {uiText.moduleMap}
+              </h2>
+              <p className="text-sm text-muted-foreground">{uiText.explore}</p>
+            </div>
+            
+            {/* ✅ VIEW TOGGLE BUTTONS */}
+            <div className="bg-muted p-1 rounded-lg flex gap-1">
+               <Button 
+                 variant={viewMode === 'graph' ? 'secondary' : 'ghost'} 
+                 size="sm" 
+                 onClick={() => setViewMode('graph')}
+                 className="gap-2"
+               >
+                 <GitGraph className="w-4 h-4" /> Graph
+               </Button>
+               <Button 
+                 variant={viewMode === 'list' ? 'secondary' : 'ghost'} 
+                 size="sm" 
+                 onClick={() => setViewMode('list')}
+                 className="gap-2"
+               >
+                 <List className="w-4 h-4" /> List
+               </Button>
+            </div>
+          </div>
+
+          <div className="mt-4 transition-all duration-300">
+            {viewMode === 'graph' ? (
+              <div className="h-[600px] border rounded-xl overflow-hidden bg-slate-50">
+                <Mindmap data={graphData} width={1000} height={600} />
+              </div>
+            ) : (
+              <div className="bg-slate-50 rounded-xl min-h-[400px]">
+                {/* ✅ RENDER LIST VIEW */}
+                <ModuleTimeline modules={flatModules} />
+              </div>
+            )}
           </div>
         </Card>
       )}
