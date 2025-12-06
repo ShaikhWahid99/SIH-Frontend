@@ -8,6 +8,7 @@ import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import { Link } from 'react-router-dom';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useLanguage } from '@/context/LanguageContext'; // ✅ GLOBAL LANGUAGE
 
 function normalize(item: unknown): PathwayCardProps {
   const obj = (item ?? {}) as Record<string, unknown>;
@@ -32,8 +33,54 @@ function normalize(item: unknown): PathwayCardProps {
 const DashboardPage = () => {
   const [recommendedPathway, setRecommendedPathway] = useState<PathwayCardProps | null>(null);
   const [alternativePathways, setAlternativePathways] = useState<PathwayCardProps[]>([]);
-  const overallProgress = 35; // Dummy progress
+  const overallProgress = 35;
 
+  // ✅ GLOBAL LANGUAGE
+  const { lang, translate } = useLanguage();
+
+  // ✅ ORIGINAL UI TEXT
+  const originalText = {
+    recommended: "Recommended for You",
+    startLearning: "Start Learning",
+    viewAll: "View All Pathways",
+
+    alternative: "Alternative Pathways",
+
+    quickActions: "Quick Actions",
+    updateProfile: "Update Profile",
+    viewProgress: "View Detailed Progress",
+    giveFeedback: "Give Feedback",
+  };
+
+  const [uiText, setUiText] = useState(originalText);
+
+  // ✅ AUTO TRANSLATE ON LANGUAGE CHANGE
+  useEffect(() => {
+    let mounted = true;
+
+    async function translateUI() {
+      if (lang === "en") {
+        mounted && setUiText(originalText);
+        return;
+      }
+
+      const translated: any = {};
+
+      for (const key in originalText) {
+        translated[key] = await translate(originalText[key as keyof typeof originalText]);
+      }
+
+      mounted && setUiText(translated);
+    }
+
+    translateUI();
+
+    return () => {
+      mounted = false;
+    };
+  }, [lang]);
+
+  // ✅ EXISTING DATA FETCH LOGIC (UNCHANGED)
   useEffect(() => {
     let mounted = true;
     api
@@ -58,57 +105,16 @@ const DashboardPage = () => {
 
   return (
     <div className="space-y-8">
-      {/* Welcome Banner */}
-      {/* <Card className="p-8 bg-gradient-to-r from-primary to-secondary text-white">
-        <div className="flex items-start justify-between">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <Sparkles className="w-6 h-6" />
-              <h1 className="text-3xl font-bold">Your Learning Dashboard</h1>
-            </div>
-            <p className="text-white/90 text-lg">
-              Your personalized pathway is ready! Let's continue your journey to success.
-            </p>
-          </div>
-          <Button variant="secondary" size="lg" className="gap-2">
-            <RefreshCw className="w-4 h-4" />
-            Regenerate Path
-          </Button>
-        </div>
-      </Card> */}
 
-      {/* Progress Overview */}
-      {/* <Card className="p-6">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <TrendingUp className="w-5 h-5 text-primary" />
-            <h2 className="text-xl font-bold text-foreground">Overall Progress</h2>
-          </div>
-          <span className="text-sm text-muted-foreground">Keep going!</span>
-        </div>
-        <ProgressBar value={overallProgress} label="Pathway Completion" />
-        <div className="grid grid-cols-3 gap-4 mt-6">
-          <div className="text-center">
-            <div className="text-2xl font-bold text-primary">3</div>
-            <div className="text-sm text-muted-foreground">Courses Completed</div>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-secondary">12</div>
-            <div className="text-sm text-muted-foreground">Total Courses</div>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-accent">9</div>
-            <div className="text-sm text-muted-foreground">Remaining</div>
-          </div>
-        </div>
-      </Card> */}
-
-      {/* Recommended Pathway */}
+      {/* ✅ RECOMMENDED PATHWAY */}
       <div>
         <div className="flex items-center gap-2 mb-4">
           <Target className="w-5 h-5 text-primary" />
-          <h2 className="text-2xl font-bold text-foreground">Recommended for You</h2>
+          <h2 className="text-2xl font-bold text-foreground">
+            {uiText.recommended}
+          </h2>
         </div>
+
         {recommendedPathway ? (
           <PathwayCard {...recommendedPathway} />
         ) : (
@@ -123,24 +129,36 @@ const DashboardPage = () => {
             </div>
           </Card>
         )}
+
         {recommendedPathway ? (
           <div className="mt-4 flex gap-3">
             <Link to={`/learner/pathways/${recommendedPathway.id}`} className="flex-1">
-              <Button className="w-full" size="lg">Start Learning</Button>
+              <Button className="w-full" size="lg">
+                {uiText.startLearning}
+              </Button>
             </Link>
-            <Button variant="outline" size="lg">View All Pathways</Button>
+            <Button variant="outline" size="lg">
+              {uiText.viewAll}
+            </Button>
           </div>
         ) : (
           <div className="mt-4 flex gap-3">
-            <Button className="flex-1" size="lg" disabled>Start Learning</Button>
-            <Button variant="outline" size="lg" disabled>View All Pathways</Button>
+            <Button className="flex-1" size="lg" disabled>
+              {uiText.startLearning}
+            </Button>
+            <Button variant="outline" size="lg" disabled>
+              {uiText.viewAll}
+            </Button>
           </div>
         )}
       </div>
 
-      {/* Alternative Pathways */}
+      {/* ✅ ALTERNATIVE PATHWAYS */}
       <div>
-        <h2 className="text-2xl font-bold text-foreground mb-4">Alternative Pathways</h2>
+        <h2 className="text-2xl font-bold text-foreground mb-4">
+          {uiText.alternative}
+        </h2>
+
         <div className="grid md:grid-cols-2 gap-6">
           {alternativePathways.length ? (
             alternativePathways.map((pathway) => (
@@ -160,23 +178,28 @@ const DashboardPage = () => {
         </div>
       </div>
 
-      {/* Quick Actions */}
+      {/* ✅ QUICK ACTIONS */}
       <Card className="p-6">
-        <h2 className="text-xl font-bold text-foreground mb-4">Quick Actions</h2>
+        <h2 className="text-xl font-bold text-foreground mb-4">
+          {uiText.quickActions}
+        </h2>
+
         <div className="grid md:grid-cols-3 gap-4">
           <Link to="/learner/profile">
             <Button variant="outline" className="w-full justify-start">
-              Update Profile
+              {uiText.updateProfile}
             </Button>
           </Link>
+
           <Link to="/learner/progress">
             <Button variant="outline" className="w-full justify-start">
-              View Detailed Progress
+              {uiText.viewProgress}
             </Button>
           </Link>
+
           <Link to="/learner/feedback">
             <Button variant="outline" className="w-full justify-start">
-              Give Feedback
+              {uiText.giveFeedback}
             </Button>
           </Link>
         </div>
