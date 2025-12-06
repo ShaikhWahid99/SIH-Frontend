@@ -6,17 +6,20 @@ import { ProgressBar } from '@/components/shared/ProgressBar';
 import Mindmap from '@/components/shared/Mindmap';
 import type { MindmapNode } from '@/components/shared/Mindmap';
 import { ModuleTimeline } from '@/components/shared/ModuleTimeline';
-import { CourseCard } from '@/components/shared/CourseCard';
+import { CourseCard } from '@/components/shared/CourseCard'; // ✅ Kept from HEAD
 import {
   ArrowLeft,
   Clock,
   GraduationCap,
   Briefcase,
   Calendar,
+  CheckCircle, // Kept from 031086c
+  Loader2, // Kept from 031086c
   GitGraph,
   List,
   Sparkles,
-  ArrowRight // ✅ Ensure this is imported
+  ArrowRight, // ✅ Kept from HEAD
+  LayoutGrid // Kept from 031086c (though unused in the final JSX)
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
@@ -50,7 +53,7 @@ function buildHierarchy(nodes: any[], links: any[], rootId: string): MindmapNode
       title: n.title || n.label || n.name || 'Unknown', // Changed to check n.label as well
       code: n.code,
       // === NEW: Capture the link from backend ===
-      link: n.link, 
+      link: n.link,
       children: []
     });
   });
@@ -69,11 +72,14 @@ const PathwayDetailPage = () => {
   const { lang, translate } = useLanguage();
 
   const [pathway, setPathway] = useState<Pathway | null>(null);
+  // ✅ Merged state from both branches
   const [viewMode, setViewMode] = useState<'graph' | 'list'>('graph');
-  
+
+  // ✅ Merged state from both branches
   const [graphData, setGraphData] = useState<MindmapNode | null>(null);
-  const [flatModules, setFlatModules] = useState<any[]>([]);
-  const [skillIndiaCourses, setSkillIndiaCourses] = useState<any[]>([]);
+  const [flatModules, setFlatModules] = useState<any[]>([]); // Store raw list for Timeline
+  const [skillIndiaCourses, setSkillIndiaCourses] = useState<any[]>([]); // Kept from HEAD
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -137,18 +143,21 @@ const PathwayDetailPage = () => {
       })
       .then((res) => {
         if (res?.nodes?.length) {
+          // 1. Build Hierarchy for Graph View (Unchanged)
           const hierarchy = buildHierarchy(res.nodes, res.links, id);
           setGraphData(hierarchy);
 
+          // 2. List Logic (Combined: Filter out root node and map properties)
           const modules = res.nodes
-            .filter((n: any) => n.id !== id) 
+            // ✅ FILTER: Exclude the node that matches the current Page ID (the Root)
+            .filter((n: any) => n.id !== id)
             .map((n: any) => ({
-               id: n.id,
-               title: n.title || n.label || n.name,
-               code: n.code,
-               link: n.link
+              id: n.id,
+              title: n.title || n.label || n.name,
+              code: n.code,
+              link: n.link
             }));
-            
+
           setFlatModules(modules);
         }
         setLoading(false);
@@ -158,14 +167,23 @@ const PathwayDetailPage = () => {
         setLoading(false);
       });
 
-    // 2. FETCH SKILL INDIA COURSES
+    // 2. FETCH SKILL INDIA COURSES (Kept from HEAD)
     api.getSkillIndiaCourses(id)
       .then((courses) => {
         setSkillIndiaCourses(courses);
       })
       .catch(err => console.error("Failed to load skill india courses", err));
 
-  }, [id]);
+  }, [id, lang]); // Added lang to dependencies for auto-translation hook
+
+  if (loading) {
+    return (
+      <div className="text-center py-12">
+        <Loader2 className="w-8 h-8 animate-spin mx-auto text-primary" />
+        <p className="text-lg mt-2">Loading pathway details...</p>
+      </div>
+    );
+  }
 
   if (error || !pathway) {
     return (
@@ -218,30 +236,31 @@ const PathwayDetailPage = () => {
         </Card>
       </div>
 
-      {/* MODULE MAP SECTION */}
+      {/* MODULE MAP SECTION (Combined UI for both views) */}
       {graphData && (
         <Card className="p-6">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
             <div>
               <h2 className="text-xl font-bold flex items-center gap-2">
-                {viewMode === 'graph' ? <GitGraph className="w-5 h-5" /> : <List className="w-5 h-5" />} 
+                {viewMode === 'graph' ? <GitGraph className="w-5 h-5" /> : <List className="w-5 h-5" />}
                 {uiText.moduleMap}
               </h2>
               <p className="text-sm text-muted-foreground">{uiText.explore}</p>
             </div>
-            
+
+            {/* ✅ VIEW TOGGLE BUTTONS */}
             <div className="bg-muted p-1 rounded-lg flex gap-1">
-               <Button 
-                 variant={viewMode === 'graph' ? 'secondary' : 'ghost'} 
-                 size="sm" 
+               <Button
+                 variant={viewMode === 'graph' ? 'secondary' : 'ghost'}
+                 size="sm"
                  onClick={() => setViewMode('graph')}
                  className="gap-2"
                >
                  <GitGraph className="w-4 h-4" /> Graph
                </Button>
-               <Button 
-                 variant={viewMode === 'list' ? 'secondary' : 'ghost'} 
-                 size="sm" 
+               <Button
+                 variant={viewMode === 'list' ? 'secondary' : 'ghost'}
+                 size="sm"
                  onClick={() => setViewMode('list')}
                  className="gap-2"
                >
@@ -257,6 +276,7 @@ const PathwayDetailPage = () => {
               </div>
             ) : (
               <div className="bg-slate-50 rounded-xl min-h-[400px]">
+                {/* ✅ RENDER LIST VIEW */}
                 <ModuleTimeline modules={flatModules} />
               </div>
             )}
@@ -264,7 +284,7 @@ const PathwayDetailPage = () => {
         </Card>
       )}
 
-      {/* ✅ SKILL INDIA RECOMMENDATIONS SECTION (Fixed Duplication) */}
+      {/* ✅ SKILL INDIA RECOMMENDATIONS SECTION (Restored from HEAD) */}
       {skillIndiaCourses.length > 0 && (
         <div className="space-y-4">
           <div className="border-l-4 border-orange-500 pl-4 flex justify-between items-end">

@@ -16,7 +16,7 @@ const navItems = [
   { icon: BookOpen, label: 'Pathways', path: '/learner/pathways' },
   { icon: TrendingUp, label: 'Progress', path: '/learner/progress' },
   { icon: Layers, label: 'Alternate Pathways', path: '/learner/alternate-pathways' },
-  // ✅ NEW ITEM ADDED HERE (Orange Color)
+  // ✅ NEW ITEM ADDED HERE (Skill India Library)
   { 
     icon: Sparkles, 
     label: 'Skill India Library', 
@@ -66,7 +66,7 @@ export const LearnerSidebar = () => {
             const Icon = item.icon;
             const isActive = location.pathname === item.path;
             
-            // ✅ Logic to handle custom colors (like for Skill India)
+            // ✅ Logic to handle custom colors (like for Skill India) - Retained
             const customClass = item.className || 'text-muted-foreground hover:bg-muted hover:text-foreground';
             const activeClass = 'bg-primary text-primary-foreground shadow-lg';
 
