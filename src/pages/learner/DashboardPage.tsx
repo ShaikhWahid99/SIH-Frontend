@@ -137,9 +137,11 @@ const DashboardPage = () => {
                 {uiText.startLearning}
               </Button>
             </Link>
-            <Button variant="outline" size="lg">
-              {uiText.viewAll}
-            </Button>
+            <Link to="/learner/alternate-pathways">
+                <Button variant="outline" size="lg"> {uiText.viewAll}
+                </Button>
+            </Link>
+
           </div>
         ) : (
           <div className="mt-4 flex gap-3">

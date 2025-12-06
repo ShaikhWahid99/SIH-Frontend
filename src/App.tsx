@@ -139,7 +139,7 @@ const App: React.FC = () => (
             />
 
             <Route
-              path="/learner/recommended-courses"
+              path="/learner/alternate-pathways"
               element={
                 <ProtectedRoute requireOnboarded={true} requireQuiz={true}>
                   <LearnerLayout>
