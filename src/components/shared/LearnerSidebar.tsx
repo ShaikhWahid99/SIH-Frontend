@@ -1,4 +1,13 @@
-import { Home, BookOpen, Target, User, TrendingUp, MessageSquare, Menu,Layers } from 'lucide-react';
+import { 
+  Home, 
+  BookOpen, 
+  User, 
+  TrendingUp, 
+  MessageSquare, 
+  Menu, 
+  Layers, 
+  Sparkles // ✅ Import Sparkles icon
+} from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useState } from 'react';
 
@@ -7,6 +16,13 @@ const navItems = [
   { icon: BookOpen, label: 'Pathways', path: '/learner/pathways' },
   { icon: TrendingUp, label: 'Progress', path: '/learner/progress' },
   { icon: Layers, label: 'Alternate Pathways', path: '/learner/alternate-pathways' },
+  // ✅ NEW ITEM ADDED HERE (Orange Color)
+  { 
+    icon: Sparkles, 
+    label: 'Skill India Library', 
+    path: '/learner/skill-india',
+    className: 'text-orange-600 hover:text-orange-700 hover:bg-orange-50' 
+  },
   { icon: User, label: 'Profile', path: '/learner/profile' },
   { icon: MessageSquare, label: 'Feedback', path: '/learner/feedback' },
 ];
@@ -50,15 +66,17 @@ export const LearnerSidebar = () => {
             const Icon = item.icon;
             const isActive = location.pathname === item.path;
             
+            // ✅ Logic to handle custom colors (like for Skill India)
+            const customClass = item.className || 'text-muted-foreground hover:bg-muted hover:text-foreground';
+            const activeClass = 'bg-primary text-primary-foreground shadow-lg';
+
             return (
               <Link
                 key={item.path}
                 to={item.path}
                 onClick={() => setIsOpen(false)}
                 className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
-                  isActive
-                    ? 'bg-primary text-primary-foreground shadow-lg'
-                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                  isActive ? activeClass : customClass
                 }`}
               >
                 <Icon className="w-5 h-5" />

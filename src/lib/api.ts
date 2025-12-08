@@ -330,5 +330,11 @@ export const api = {
 
   getCourseById: (id: string) => request<any>(`/api/courses/${id}`), 
 
+  // ✅ NEW: Skill India Recommendations
+  getSkillIndiaCourses: (id: string) => request<any[]>(`/api/recommendations/skill-india/${id}`),
+
   searchVideos: (query: string) => request<YouTubeVideo[]>(`/api/videos/search?q=${encodeURIComponent(query)}`),
+
+  getAllSkillIndiaCourses: (page = 1, limit = 20, search = '') => 
+    request<any[]>(`/api/skill-india/all?page=${page}&limit=${limit}&search=${encodeURIComponent(search)}`),
 };

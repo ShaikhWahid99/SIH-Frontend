@@ -31,6 +31,7 @@ import OAuthSuccess from "./pages/auth/OAuthSuccess";
 import AdaptiveQuizPage from "./pages/learner/AdaptiveQuizPage";
 import RecommendedCoursesPage from "@/pages/learner/RecommendedCoursesPage";
 import SimilarCoursesPage from "@/pages/learner/SimilarCoursesPage";
+import SkillIndiaExplorer from "./pages/learner/SkillIndiaExplorer";
 
 // import data from "./roadmap-test/reactRoadmap.json";
 // import RoadmapFlow from "./roadmap-test/RoadmapFlow";
@@ -181,9 +182,16 @@ const App: React.FC = () => (
               }
             />
 
-
-
-
+            <Route
+              path="/learner/skill-india"
+              element={
+                <ProtectedRoute requireOnboarded={true} requireQuiz={true}>
+                  <LearnerLayout>
+                    <SkillIndiaExplorer />
+                  </LearnerLayout>
+                </ProtectedRoute>
+              }
+            />
 
             <Route path="/oauth-success" element={<OAuthSuccess />} />
 
