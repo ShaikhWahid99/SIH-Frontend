@@ -292,6 +292,8 @@ export const api = {
 
   trainerGetMe: () => trainerRequest("/trainer/me"),
 
+  trainerGetLearners: () => trainerRequest("/trainer/learners"),
+
   trainerRefreshSession: () =>
     trainerRequest("/trainer/refresh", {
       method: "POST",

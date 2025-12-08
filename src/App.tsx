@@ -104,14 +104,14 @@ const App: React.FC = () => {
 
               {/* TRAINER */}
               <Route 
-                path="/trainer/dashboard"
-                element={
-                  <TrainerProtectedRoute>
-                    <TrainerLayout>
-                      <TrainerDashboard />
-                    </TrainerLayout>
-                  </TrainerProtectedRoute>
-                }
+              path="/trainer/dashboard"
+              element={
+                <TrainerProtectedRoute>
+                  {/* <TrainerLayout> */}
+                    <TrainerDashboard />
+                  {/* </TrainerLayout> */}
+                </TrainerProtectedRoute>
+              }
               />
 
               {/* ALL LEARNER ROUTES */}

@@ -77,20 +77,6 @@ const quizQuestions: QuizQuestion[] = [
       "Nature, field work, or environment",
     ],
   },
-  {
-    id: 3,
-    question: "If you had a free day, what would you enjoy doing the most?",
-    type: "single",
-    category: "interest",
-    icon: <Heart className="w-5 h-5" />,
-    options: [
-      "Building/fixing something",
-      "Learning or reading new concepts",
-      "Creating art/design/content",
-      "Socializing with people",
-      "Exploring outdoors or hands-on tasks",
-    ],
-  },
 
   // ──────────────── 🧠 B. Skills & Strengths ────────────────
   {
@@ -120,29 +106,8 @@ const quizQuestions: QuizQuestion[] = [
       "Not comfortable at all",
     ],
   },
-  {
-    id: 6,
-    question: "Which type of task do you perform better?",
-    type: "single",
-    category: "skills",
-    icon: <Zap className="w-5 h-5" />,
-    options: [
-      "Mental/logical tasks",
-      "Hands-on physical tasks",
-      "Creative tasks",
-      "People-focused tasks",
-    ],
-  },
 
   // ──────────────── 🌍 Purpose & Impact ────────────────
-  {
-    id: 7,
-    question: "Do you enjoy helping people or contributing to society?",
-    type: "single",
-    category: "purpose",
-    icon: <Globe className="w-5 h-5" />,
-    options: ["Yes, very much", "Sometimes", "Not really", "No"],
-  },
   {
     id: 8,
     question: "Do you like identifying problems and improving systems or processes?",
@@ -205,9 +170,13 @@ const quizQuestions: QuizQuestion[] = [
     type: "single",
     category: "career",
     icon: <Briefcase className="w-5 h-5" />,
-    options: ["Routine and predictable", "Dynamic and changing", " Creative and flexible", "Physical and hands-on"],
+    options: [
+      "Routine and predictable",
+      "Dynamic and changing",
+      "Creative and flexible",
+      "Physical and hands-on",
+    ],
   },
-
 
   // ──────────────── ⚡ Personality & Style ────────────────
   {
@@ -245,6 +214,7 @@ const quizQuestions: QuizQuestion[] = [
     ],
   },
 ];
+
 
 
 const categoryColors: Record<QuizCategory, string> = {
