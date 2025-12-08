@@ -1,39 +1,16 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { TextInput } from "@/components/shared/TextInput";
-import { useToast } from "@/hooks/use-toast"; // ✅ API TRANSLATOR
+import { useToast } from "@/hooks/use-toast";
 
 const LoginPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-
-  // ✅ LANGUAGE STATE
-  const [lang, setLang] = useState("en");
-
-  // ✅ TRANSLATED TEXT STATES
-  const [welcomeTitle, setWelcomeTitle] = useState("Welcome back");
-  const [welcomeDesc, setWelcomeDesc] = useState("Login to continue your learning journey");
-  const [emailLabel, setEmailLabel] = useState("Email");
-  const [passwordLabel, setPasswordLabel] = useState("Password");
-  const [loginBtn, setLoginBtn] = useState("Login");
-  const [loggingInBtn, setLoggingInBtn] = useState("Logging in...");
-  const [orText, setOrText] = useState("or");
-  const [googleText, setGoogleText] = useState("Continue with Google");
-  const [noAccountText, setNoAccountText] = useState("Don't have an account?");
-  const [registerText, setRegisterText] = useState("Register here");
-
-  const [toastWelcomeTitle, setToastWelcomeTitle] = useState("Welcome back!");
-  const [toastWelcomeDesc, setToastWelcomeDesc] = useState("You have successfully logged in.");
-  const [toastErrorTitle, setToastErrorTitle] = useState("Login failed");
-  const [toastErrorDesc, setToastErrorDesc] = useState("Please check your email or password.");
-
-  // ✅ AUTO TRANSLATE ON LANGUAGE CHANGE
-  
 
   const { login, refreshUser } = useAuth();
   const navigate = useNavigate();
@@ -50,8 +27,8 @@ const LoginPage = () => {
       if (!me) throw new Error("Unable to fetch user");
 
       toast({
-        title: toastWelcomeTitle,
-        description: toastWelcomeDesc,
+        title: "✅ Login Successful",
+        description: "You have successfully logged in.",
       });
 
       if (!me.onboarded) return navigate("/onboarding", { replace: true });
@@ -60,8 +37,8 @@ const LoginPage = () => {
       navigate("/learner/dashboard", { replace: true });
     } catch (err) {
       toast({
-        title: toastErrorTitle,
-        description: toastErrorDesc,
+        title: "❌ Login failed",
+        description: "Please check your email or password.",
         variant: "destructive",
       });
     } finally {
@@ -76,59 +53,54 @@ const LoginPage = () => {
   return (
     <Card className="p-8 w-full max-w-md relative">
 
-        {/* ✅ LANGUAGE SWITCH BUTTONS */}
-      <div className="absolute top-4 right-4 flex gap-2">
-        <button onClick={() => setLang("en")} className="border px-2 py-1 rounded">EN</button>
-        <button onClick={() => setLang("hi")} className="border px-2 py-1 rounded">HI</button>
-        <button onClick={() => setLang("mr")} className="border px-2 py-1 rounded">MR</button>
-      </div>
-    
       {/* --- TRAINER BUTTON --- */}
       <Button
         variant="outline"
         size="sm"
         className="absolute top-4 right-4"
         onClick={() => navigate("/auth/trainer-login")}
+        data-translate
       >
         Login as Trainer
       </Button>
 
-      <div className="mb-6 pr-24"> 
-        {/* spacing so text doesn't overlap with the button */}
-        <h1 className="text-2xl font-bold text-foreground mb-2">
-          {welcomeTitle}
+      <div className="mb-6 pr-24">
+        <h1 className="text-2xl font-bold text-foreground mb-2" data-translate>
+          Welcome back
         </h1>
-        <p className="text-muted-foreground">
-          {welcomeDesc}
+        <p className="text-muted-foreground" data-translate>
+          Login to continue your learning journey
         </p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <TextInput
-          label={emailLabel}
+          label="Email"
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
+          data-translate
         />
 
         <TextInput
-          label={passwordLabel}
+          label="Password"
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
+          data-translate
         />
 
-        <Button type="submit" className="w-full" disabled={loading}>
-          {loading ? loggingInBtn : loginBtn}
+        <Button type="submit" className="w-full" disabled={loading} data-translate>
+          {loading ? "Logging in..." : "Login"}
         </Button>
       </form>
 
       <div className="mt-4">
         <div className="flex items-center gap-3">
           <div className="flex-1 h-px bg-gray-200" />
-          <span className="text-sm text-gray-400">{orText}</span>
+          <span className="text-sm text-gray-400" data-translate>or</span>
           <div className="flex-1 h-px bg-gray-200" />
         </div>
 
@@ -137,20 +109,22 @@ const LoginPage = () => {
             onClick={handleGoogle}
             className="w-full flex items-center justify-center gap-3"
             variant="outline"
+            data-translate
           >
-            {googleText}
+            Continue with Google
           </Button>
         </div>
       </div>
 
       <div className="mt-6 text-center">
         <p className="text-sm text-muted-foreground">
-          {noAccountText}{" "}
+          <span data-translate>Don't have an account?</span>{" "}
           <Link
             to="/auth/register"
             className="text-primary font-medium hover:underline"
+            data-translate
           >
-            {registerText}
+            Register here
           </Link>
         </p>
       </div>
