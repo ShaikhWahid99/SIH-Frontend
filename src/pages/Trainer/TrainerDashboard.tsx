@@ -1,17 +1,44 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Calendar, Users, BookOpen, Clock, LogOut } from "lucide-react";
+import { Users, LogOut } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { api } from "@/lib/api";
 
 const TrainerDashboard = () => {
-  const { logoutTrainer } = useAuth();
+  const { logoutTrainer, trainer } = useAuth();
   const navigate = useNavigate();
+
+  const [learners, setLearners] = useState<Array<{ id: string; email?: string | null; displayName?: string | null; details?: any | null }>>([]);
+  const [loadingLearners, setLoadingLearners] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleLogout = async () => {
     await logoutTrainer();
     navigate("/auth/trainer-login", { replace: true });
   };
+
+  useEffect(() => {
+    let mounted = true;
+    async function fetchLearners() {
+      try {
+        setLoadingLearners(true);
+        setError(null);
+        const res = await api.trainerGetLearners();
+        const list = Array.isArray(res?.learners) ? res.learners : [];
+        if (mounted) setLearners(list);
+      } catch (e: any) {
+        if (mounted) setError(e?.message || "Failed to load learners");
+      } finally {
+        if (mounted) setLoadingLearners(false);
+      }
+    }
+    fetchLearners();
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   return (
     <div className="space-y-8 p-6">
@@ -35,90 +62,75 @@ const TrainerDashboard = () => {
         </Button>
       </div>
 
-      {/* STATS */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {/* Summary */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card className="shadow-sm border">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
-              <Users className="h-5 w-5 text-primary" /> Total Learners
+              <Users className="h-5 w-5 text-primary" /> Learners in Sector
             </CardTitle>
           </CardHeader>
-          <CardContent className="text-3xl font-bold">42</CardContent>
+          <CardContent>
+            <div className="text-3xl font-bold">{loadingLearners ? "…" : learners.length}</div>
+            <p className="text-sm text-muted-foreground mt-1">Sector: {trainer?.sector || "N/A"}</p>
+          </CardContent>
         </Card>
 
         <Card className="shadow-sm border">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <BookOpen className="h-5 w-5 text-primary" /> Training Modules
-            </CardTitle>
+            <CardTitle className="text-lg">Trainer Information</CardTitle>
           </CardHeader>
-          <CardContent className="text-3xl font-bold">8</CardContent>
-        </Card>
-
-        <Card className="shadow-sm border">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <Clock className="h-5 w-5 text-primary" /> Hours Completed
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="text-3xl font-bold">54</CardContent>
+          <CardContent>
+            {/* <p className="text-sm"><span className="font-medium">Name:</span> {trainer?.displayName || trainer?.email || "—"}</p> */}
+            <p className="text-sm"><span className="font-medium">Email:</span> {trainer?.email || "—"}</p>
+            <p className="text-sm"><span className="font-medium">Sector:</span> {trainer?.sector || "—"}</p>
+          </CardContent>
         </Card>
       </div>
 
-      {/* TODAY'S SESSIONS */}
+      {/* Learners in Your Sector */}
       <Card className="shadow-sm border">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Calendar className="h-5 w-5 text-primary" /> Today's Sessions
+          <CardTitle className="text-lg">
+            Learners in {trainer?.sector || "your sector"}
           </CardTitle>
         </CardHeader>
-
-        <CardContent className="space-y-4">
-          <div className="flex justify-between items-center border rounded p-4">
-            <div>
-              <h3 className="font-semibold">Web Development - Batch A</h3>
-              <p className="text-sm text-muted-foreground">
-                10:00 AM – 12:00 PM
-              </p>
+        <CardContent>
+          {error && (
+            <p className="text-sm text-red-600 mb-2">{error}</p>
+          )}
+          {loadingLearners && !error ? (
+            <p className="text-sm text-muted-foreground">Loading learners…</p>
+          ) : learners.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No learners found for this sector.</p>
+          ) : (
+            <div className="space-y-2">
+              {learners.map((l) => (
+                <div key={l.id} className="border rounded p-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium">{l.displayName || l.email || "—"}</p>
+                      {l.displayName && (
+                        <p className="text-xs text-muted-foreground">ID: {l.id}</p>
+                      )}
+                    </div>
+                    {/* <Button variant="outline">View Profile</Button> */}
+                  </div>
+                  {l.details && (
+                    <div className="mt-2 text-sm text-muted-foreground">
+                      <p>Location: {l.details.state || "—"}{l.details.district ? ", " + l.details.district : ""}</p>
+                      <p>Qualification: {l.details.highestQualification || "—"}</p>
+                      <p>Skills: {Array.isArray(l.details.skills) ? l.details.skills.join(", ") || "—" : "—"}</p>
+                      <p>Interest Sectors: {Array.isArray(l.details.interestSectors) ? l.details.interestSectors.join(", ") || "—" : "—"}</p>
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
-            <Button>Start Session</Button>
-          </div>
-
-          <div className="flex justify-between items-center border rounded p-4">
-            <div>
-              <h3 className="font-semibold">UI/UX Design Basics</h3>
-              <p className="text-sm text-muted-foreground">
-                2:00 PM – 4:00 PM
-              </p>
-            </div>
-            <Button>Start Session</Button>
-          </div>
+          )}
         </CardContent>
       </Card>
-
-      {/* UPCOMING TASKS */}
-      <Card className="shadow-sm border">
-        <CardHeader>
-          <CardTitle className="text-lg">Upcoming Tasks</CardTitle>
-        </CardHeader>
-
-        <CardContent className="space-y-3">
-          <div className="flex justify-between items-center border rounded p-3">
-            <p>Review assignments for Batch A</p>
-            <Button variant="outline">View</Button>
-          </div>
-
-          <div className="flex justify-between items-center border rounded p-3">
-            <p>Prepare Module 5 slides</p>
-            <Button variant="outline">Open</Button>
-          </div>
-
-          <div className="flex justify-between items-center border rounded p-3">
-            <p>Schedule next practice session</p>
-            <Button variant="outline">Schedule</Button>
-          </div>
-        </CardContent>
-      </Card>
+      {/* End */}
     </div>
   );
 };

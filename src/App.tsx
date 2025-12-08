@@ -96,9 +96,9 @@ const App: React.FC = () => (
               path="/trainer/dashboard"
               element={
                 <TrainerProtectedRoute>
-                  <TrainerLayout>
+                  {/* <TrainerLayout> */}
                     <TrainerDashboard />
-                  </TrainerLayout>
+                  {/* </TrainerLayout> */}
                 </TrainerProtectedRoute>
               }
               />
