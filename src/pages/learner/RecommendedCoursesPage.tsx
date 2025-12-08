@@ -251,11 +251,14 @@ const RecommendedCoursesPage = () => {
 
                     <Link to="/learner/similar-courses-page">
                         <Button
-                            size="lg"
-                            className="bg-white/70 text-primary hover:bg-white/90"
-                        >
-                            View Similar Courses
-                        </Button>
+  size="lg"
+  className="w-full text-white bg-gradient-to-r from-primary to-secondary 
+             rounded-xl py-3 shadow-md hover:shadow-lg hover:scale-[1.02] 
+             transition-all duration-300"
+>
+  View Similar Courses
+</Button>
+
                     </Link>
                 </div>
             </Card>

@@ -136,9 +136,16 @@ const FeedbackPage = () => {
             />
           </div>
 
-          <Button type="submit" size="lg" className="w-full">
-            {uiText.submitBtn}
-          </Button>
+         <Button
+  type="submit"
+  size="lg"
+    className="w-full text-white bg-gradient-to-r from-primary to-secondary 
+             rounded-xl py-3 shadow-md hover:shadow-lg hover:scale-[1.02] 
+             transition-all duration-300"
+>
+  {uiText.submitBtn}
+</Button>
+
         </form>
       </Card>
     </div>

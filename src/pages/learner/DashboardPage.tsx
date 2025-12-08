@@ -130,29 +130,54 @@ const DashboardPage = () => {
           </Card>
         )}
 
-        {recommendedPathway ? (
-          <div className="mt-4 flex gap-3">
-            <Link to={`/learner/pathways/${recommendedPathway.id}`} className="flex-1">
-              <Button className="w-full" size="lg">
-                {uiText.startLearning}
-              </Button>
-            </Link>
-            <Link to="/learner/alternate-pathways">
-                <Button variant="outline" size="lg"> {uiText.viewAll}
-                </Button>
-            </Link>
+       {recommendedPathway ? (
+  <div className="mt-4 flex gap-3">
+    <Link to={`/learner/pathways/${recommendedPathway.id}`} className="flex-1">
+      <Button
+        className="w-full text-lg py-3 rounded-xl shadow-md 
+                   hover:shadow-lg hover:scale-[1.02] 
+                   transition-all duration-300"
+        size="lg"
+      >
+        {uiText.startLearning}
+      </Button>
+    </Link>
 
-          </div>
-        ) : (
-          <div className="mt-4 flex gap-3">
-            <Button className="flex-1" size="lg" disabled>
-              {uiText.startLearning}
-            </Button>
-            <Button variant="outline" size="lg" disabled>
-              {uiText.viewAll}
-            </Button>
-          </div>
-        )}
+    <Link to="/learner/alternate-pathways">
+      <Button
+        variant="outline"
+        size="lg"
+        className="text-lg py-3 rounded-xl border-white/40 
+                   hover:bg-white/10 hover:scale-[1.02]
+                   shadow-md hover:shadow-lg transition-all duration-300"
+      >
+        {uiText.viewAll}
+      </Button>
+    </Link>
+  </div>
+) : (
+  <div className="mt-4 flex gap-3">
+    <Button
+      className="w-full text-white bg-gradient-to-r from-primary to-secondary 
+             rounded-xl py-3 shadow-md hover:shadow-lg hover:scale-[1.02] 
+             transition-all duration-300"
+      size="lg"
+      disabled
+    >
+      {uiText.startLearning}
+    </Button>
+
+    <Button
+      variant="outline"
+      size="lg"
+      disabled
+      className="text-lg py-3 rounded-xl opacity-60 shadow-md"
+    >
+      {uiText.viewAll}
+    </Button>
+  </div>
+)}
+
       </div>
 
       {/* ✅ ALTERNATIVE PATHWAYS */}
@@ -211,3 +236,5 @@ const DashboardPage = () => {
 };
 
 export default DashboardPage;
+
+

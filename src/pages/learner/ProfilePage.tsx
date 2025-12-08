@@ -144,15 +144,35 @@ const ProfilePage = () => {
         <h1 className="text-3xl font-bold">{uiText.title}</h1>
 
         {!isEditing ? (
-          <Button onClick={() => setIsEditing(true)}>
-            {uiText.editBtn}
-          </Button>
+          <Button
+  onClick={() => setIsEditing(true)}
+  className="px-6 py-2 rounded-xl shadow-md hover:shadow-lg 
+             hover:scale-[1.02] transition-all duration-300"
+
+>
+  {uiText.editBtn}
+</Button>
+
         ) : (
           <div className="flex gap-2">
-            <Button onClick={handleSave}>{uiText.saveBtn}</Button>
-            <Button variant="outline" onClick={() => setIsEditing(false)}>
-              {uiText.cancelBtn}
-            </Button>
+           <Button
+  onClick={handleSave}
+  className="px-6 py-2 rounded-xl shadow-md hover:shadow-lg 
+             hover:scale-[1.02] transition-all duration-300"
+>
+  {uiText.saveBtn}
+</Button>
+
+            <Button
+  variant="outline"
+  onClick={() => setIsEditing(false)}
+  className="px-6 py-2 rounded-xl shadow-md hover:shadow-lg 
+             hover:scale-[1.02] transition-all duration-300
+             border-gray-300 hover:bg-gray-100"
+>
+  {uiText.cancelBtn}
+</Button>
+
           </div>
         )}
       </div>

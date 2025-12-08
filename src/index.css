@@ -366,3 +366,34 @@
   90%         {transform:translate(26px)}
 }
 
+
+@layer utilities {
+  .primary-gradient {
+    background: linear-gradient(
+      135deg,
+      hsl(var(--primary)) 0%,
+      hsl(var(--primary) / 0.85) 40%,
+      hsl(var(--primary) / 0.70) 100%
+    );
+  }
+
+  .primary-gradient-soft {
+    background: linear-gradient(
+      135deg,
+      hsl(var(--primary) / 0.15),
+      hsl(var(--primary) / 0.05)
+    );
+  }
+
+  .text-primary-gradient {
+    background: linear-gradient(
+      135deg,
+      hsl(var(--primary)),
+      hsl(var(--primary) / 0.6)
+    );
+    -webkit-background-clip: text;
+    color: transparent;
+  }
+}
+
+
