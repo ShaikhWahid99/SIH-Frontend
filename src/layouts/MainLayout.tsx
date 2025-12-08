@@ -2,6 +2,7 @@ import { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { GraduationCap } from 'lucide-react';
+import ChatWidget from '@/components/ChatWidget';
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -43,6 +44,7 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
       </header>
       
       <main className="flex-1">{children}</main>
+      <ChatWidget />
       
       <footer className="border-t border-border py-8">
         <div className="container mx-auto px-4">

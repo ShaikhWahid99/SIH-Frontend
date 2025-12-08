@@ -4,6 +4,7 @@ import { useAuth } from "@/context/AuthContext";
 import { LearnerSidebar } from "@/components/shared/LearnerSidebar";
 import { Button } from "@/components/ui/button";
 import { LogOut, Bell } from "lucide-react";
+import ChatWidget from "@/components/ChatWidget";
 
 interface LearnerLayoutProps {
   children: ReactNode;
@@ -50,6 +51,7 @@ export const LearnerLayout = ({ children }: LearnerLayoutProps) => {
         </header>
 
         <main className="flex-1 p-6 overflow-auto">{children}</main>
+        <ChatWidget />
       </div>
     </div>
   );

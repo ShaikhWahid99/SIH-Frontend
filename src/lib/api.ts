@@ -340,4 +340,11 @@ export const api = {
 
   getAllSkillIndiaCourses: (page = 1, limit = 20, search = '') => 
     request<any[]>(`/api/skill-india/all?page=${page}&limit=${limit}&search=${encodeURIComponent(search)}`),
+
+  // ─────────── chatbot ───────────
+  sendChat: (query: string, threadId?: string) =>
+    request<{ thread_id: string; data: any }>("/api/chat", {
+      method: "POST",
+      body: JSON.stringify({ query, thread_id: threadId }),
+    }),
 };
