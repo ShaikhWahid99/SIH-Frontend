@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Sparkles, ThumbsUp, ThumbsDown, ChevronRight, CheckCircle } from "lucide-react";
 import { api, SwipeRequest, SwipeStage } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
+import { Textarea } from "@/components/ui/textarea";
 
 type Rating = "like" | "dislike" | null;
 
@@ -27,6 +28,9 @@ const SwipeQuizPage = () => {
   const [nextStageHint, setNextStageHint] = useState<SwipeStage | undefined>(undefined);
   const [isDoneHint, setIsDoneHint] = useState<boolean>(false);
   const [currentCardIndex, setCurrentCardIndex] = useState<number>(0);
+  const [savedLikes, setSavedLikes] = useState<string[]>([]);
+  const [showDescriptionStep, setShowDescriptionStep] = useState<boolean>(false);
+  const [description, setDescription] = useState<string>("");
 
   const allRated = useMemo(() => cards.length > 0 && ratings.every((r) => r !== null), [cards, ratings]);
 
@@ -76,6 +80,13 @@ const SwipeQuizPage = () => {
       next[index] = value;
       return next;
     });
+    const text = cards[index];
+    if (value === "like" && text && !savedLikes.includes(text)) {
+      setSavedLikes((s) => [...s, text]);
+      api
+        .saveDynamicQuiz({ dynamicQuizAnswers: [{ question: text, answer: "like" }] })
+        .catch(() => {});
+    }
     if (index < cards.length - 1) {
       setCurrentCardIndex(index + 1);
     }
@@ -93,10 +104,20 @@ const SwipeQuizPage = () => {
     const nextStage = nextStageHint ?? defaultNext;
 
     if (!nextStage || isDoneHint || batchesCompleted + 1 >= 4) {
+      const totalLikes = Math.max(nextLiked.length, savedLikes.length);
+      if (totalLikes <= 3 && !showDescriptionStep && !description) {
+        setShowDescriptionStep(true);
+        return;
+      }
       try {
         setSubmitting(true);
-        const dynamicQuizAnswers = nextLiked.map((text) => ({ question: text, answer: "like" }));
-        await api.saveDynamicQuiz({ dynamicQuizAnswers });
+        const dynamicQuizAnswers = [
+          ...nextLiked.map((text) => ({ question: text, answer: "like" })),
+          ...(description
+            ? [{ question: "Self Description", answer: description.trim(), category: "description" }]
+            : []),
+        ];
+        await api.saveDynamicQuiz({ dynamicQuizAnswers, careerGoal: description || undefined });
         await refreshUser();
         toast({ title: "Quiz completed", description: "Personalization updated successfully." });
         navigate("/learner/dashboard", { replace: true });
@@ -133,6 +154,51 @@ const SwipeQuizPage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 py-10 px-4">
       <div className="max-w-4xl mx-auto">
+        {showDescriptionStep ? (
+          <Card className="p-6 bg-white border-slate-200 shadow-sm">
+            <div className="mb-4 text-center">
+              <div className="inline-flex items-center gap-2 bg-white border border-slate-100 px-3 py-1 rounded-full shadow-sm mb-4">
+                <Sparkles className="w-4 h-4 text-slate-500" />
+                <span className="text-xs text-slate-600 font-medium">Final Step</span>
+              </div>
+              <h2 className="text-xl font-semibold text-slate-900">Describe yourself</h2>
+              <p className="text-slate-600">Add a short description to refine personalization.</p>
+            </div>
+            <Textarea
+              placeholder="Write a short description..."
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="min-h-[120px]"
+            />
+            <div className="flex items-center justify-end mt-4">
+              <Button
+                onClick={async () => {
+                  if (!description.trim()) return;
+                  try {
+                    setSubmitting(true);
+                    const dynamicQuizAnswers = [
+                      ...savedLikes.map((text) => ({ question: text, answer: "like" })),
+                      { question: "Self Description", answer: description.trim(), category: "description" },
+                    ];
+                    await api.saveDynamicQuiz({ dynamicQuizAnswers, careerGoal: description.trim() });
+                    await refreshUser();
+                    toast({ title: "Saved", description: "Profile updated successfully." });
+                    navigate("/learner/dashboard", { replace: true });
+                  } catch (err: unknown) {
+                    const message = err instanceof Error ? err.message : "Could not save.";
+                    toast({ title: "Save failed", description: message, variant: "destructive" });
+                  } finally {
+                    setSubmitting(false);
+                  }
+                }}
+                disabled={submitting || !description.trim()}
+              >
+                Finish
+              </Button>
+            </div>
+          </Card>
+        ) : (
+        <>
         <div className="mb-8 text-center">
           <div className="inline-flex items-center gap-2 bg-white border border-slate-100 px-3 py-1 rounded-full shadow-sm mb-4">
             <Sparkles className="w-4 h-4 text-slate-500" />
@@ -201,25 +267,8 @@ const SwipeQuizPage = () => {
             </Card>
           )}
         </div>
-
-        <Card className="p-6 bg-white border-slate-200 shadow-sm">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3 text-slate-600">
-              {allRated ? (
-                <>
-                  <CheckCircle className="w-4 h-4 text-emerald-600" />
-                  <span>All cards rated. Continue to next batch.</span>
-                </>
-              ) : (
-                <span>Rate all cards to continue.</span>
-              )}
-            </div>
-            <Button onClick={goNext} disabled={!allRated || submitting} className="gap-2">
-              Next
-              <ChevronRight className="w-4 h-4" />
-            </Button>
-          </div>
-        </Card>
+        </>
+        )}
       </div>
     </div>
   );
