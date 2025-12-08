@@ -6,6 +6,8 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { TextInput } from "@/components/shared/TextInput";
 import { useToast } from "@/hooks/use-toast"; // ✅ API TRANSLATOR
+import { FcGoogle } from "react-icons/fc";
+
 
 const LoginPage = () => {
   const [email, setEmail] = useState("");
@@ -75,26 +77,25 @@ const LoginPage = () => {
 
   return (
     <Card className="p-8 w-full max-w-md relative">
-
-        {/* ✅ LANGUAGE SWITCH BUTTONS */}
-      <div className="absolute top-4 right-4 flex gap-2">
+      {/* Adjusted LANGUAGE SWITCH BUTTONS */}
+      {/* <div className="absolute top-4 right-4 flex gap-2">
         <button onClick={() => setLang("en")} className="border px-2 py-1 rounded">EN</button>
         <button onClick={() => setLang("hi")} className="border px-2 py-1 rounded">HI</button>
         <button onClick={() => setLang("mr")} className="border px-2 py-1 rounded">MR</button>
-      </div>
-    
+      </div> */}
+
       {/* --- TRAINER BUTTON --- */}
       <Button
         variant="outline"
         size="sm"
-        className="absolute top-4 right-4"
+        className="absolute top-4 left-4 z-10"
         onClick={() => navigate("/auth/trainer-login")}
       >
         Login as Trainer
       </Button>
 
-      <div className="mb-6 pr-24"> 
-        {/* spacing so text doesn't overlap with the button */}
+      <div className="mb-6 text-center mt-12"> 
+        {/* Added margin-top to ensure text doesn't overlap */}
         <h1 className="text-2xl font-bold text-foreground mb-2">
           {welcomeTitle}
         </h1>
@@ -138,7 +139,7 @@ const LoginPage = () => {
             className="w-full flex items-center justify-center gap-3"
             variant="outline"
           >
-            {googleText}
+            <FcGoogle />{googleText}
           </Button>
         </div>
       </div>
