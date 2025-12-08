@@ -6,20 +6,20 @@ import { ProgressBar } from '@/components/shared/ProgressBar';
 import Mindmap from '@/components/shared/Mindmap';
 import type { MindmapNode } from '@/components/shared/Mindmap';
 import { ModuleTimeline } from '@/components/shared/ModuleTimeline';
-import { CourseCard } from '@/components/shared/CourseCard'; // ✅ Kept from HEAD
+import { CourseCard } from '@/components/shared/CourseCard'; // ✅ Kept
 import {
   ArrowLeft,
   Clock,
   GraduationCap,
   Briefcase,
   Calendar,
-  CheckCircle, // Kept from 031086c
-  Loader2, // Kept from 031086c
+  CheckCircle, // Kept from previous merge
+  Loader2, // Kept for loading state
   GitGraph,
   List,
   Sparkles,
-  ArrowRight, // ✅ Kept from HEAD
-  LayoutGrid // Kept from 031086c (though unused in the final JSX)
+  ArrowRight, // ✅ Kept
+  LayoutGrid // Kept from previous merge
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
@@ -41,8 +41,6 @@ interface Pathway {
   jobOpportunities?: string[];
 }
 
-// ... inside pages/learner/PathwayDetailPage.tsx
-
 // Helper to convert Flat Graph Data -> Tree Hierarchy
 function buildHierarchy(nodes: any[], links: any[], rootId: string): MindmapNode | null {
   const nodeMap = new Map<string, MindmapNode>();
@@ -50,7 +48,7 @@ function buildHierarchy(nodes: any[], links: any[], rootId: string): MindmapNode
   nodes.forEach(n => {
     nodeMap.set(n.id, {
       id: n.id,
-      title: n.title || n.label || n.name || 'Unknown', // Changed to check n.label as well
+      title: n.title || n.label || n.name || 'Unknown',
       code: n.code,
       // === NEW: Capture the link from backend ===
       link: n.link,
@@ -72,14 +70,14 @@ const PathwayDetailPage = () => {
   const { lang, translate } = useLanguage();
 
   const [pathway, setPathway] = useState<Pathway | null>(null);
-  // ✅ Merged state from both branches
+  // ✅ Merged state for view toggle
   const [viewMode, setViewMode] = useState<'graph' | 'list'>('graph');
 
-  // ✅ Merged state from both branches
+  // ✅ Merged state for data
   const [graphData, setGraphData] = useState<MindmapNode | null>(null);
   const [flatModules, setFlatModules] = useState<any[]>([]); // Store raw list for Timeline
-  const [skillIndiaCourses, setSkillIndiaCourses] = useState<any[]>([]); // Kept from HEAD
-
+  const [skillIndiaCourses, setSkillIndiaCourses] = useState<any[]>([]); // Kept
+  
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -143,13 +141,11 @@ const PathwayDetailPage = () => {
       })
       .then((res) => {
         if (res?.nodes?.length) {
-          // 1. Build Hierarchy for Graph View (Unchanged)
           const hierarchy = buildHierarchy(res.nodes, res.links, id);
           setGraphData(hierarchy);
 
-          // 2. List Logic (Combined: Filter out root node and map properties)
+          // 2. List Logic: Filter out root node and map properties
           const modules = res.nodes
-            // ✅ FILTER: Exclude the node that matches the current Page ID (the Root)
             .filter((n: any) => n.id !== id)
             .map((n: any) => ({
               id: n.id,
@@ -167,14 +163,14 @@ const PathwayDetailPage = () => {
         setLoading(false);
       });
 
-    // 2. FETCH SKILL INDIA COURSES (Kept from HEAD)
+    // 2. FETCH SKILL INDIA COURSES 
     api.getSkillIndiaCourses(id)
       .then((courses) => {
         setSkillIndiaCourses(courses);
       })
       .catch(err => console.error("Failed to load skill india courses", err));
 
-  }, [id, lang]); // Added lang to dependencies for auto-translation hook
+  }, [id, lang]); // lang dependency kept for translation
 
   if (loading) {
     return (
@@ -276,7 +272,6 @@ const PathwayDetailPage = () => {
               </div>
             ) : (
               <div className="bg-slate-50 rounded-xl min-h-[400px]">
-                {/* ✅ RENDER LIST VIEW */}
                 <ModuleTimeline modules={flatModules} />
               </div>
             )}
@@ -284,7 +279,7 @@ const PathwayDetailPage = () => {
         </Card>
       )}
 
-      {/* ✅ SKILL INDIA RECOMMENDATIONS SECTION (Restored from HEAD) */}
+      {/* ✅ SKILL INDIA RECOMMENDATIONS SECTION */}
       {skillIndiaCourses.length > 0 && (
         <div className="space-y-4">
           <div className="border-l-4 border-orange-500 pl-4 flex justify-between items-end">
