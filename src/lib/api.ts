@@ -1,5 +1,3 @@
-// src/lib/api.ts
-
 import {
   getAccessToken,
   getRefreshToken,
@@ -15,24 +13,10 @@ import {
 } from "./auth";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:5000";
-const CAREER_QUIZ_BASE = "https://career-quiz-api.onrender.com";
 
 // --- INTERFACES ---
-export interface DynamicQuizApiResponse {
-  status: string;
-  user_id: string;
-  data: {
-    quiz_title: string;
-    questions: {
-      id: number;
-      question_text: string;
-      options: string[];
-    }[];
-  };
-}
-
 export interface DynamicQuizQuestion {
-  id: string;
+  id: string | number;
   question: string;
   options: string[];
 }
@@ -145,22 +129,6 @@ async function refreshSession() {
   }
 }
 
-// --- EXTERNAL SERVICES ---
-async function fetchDynamicQuiz(userId: string): Promise<DynamicQuizQuestion[]> {
-  const res = await fetch(`${CAREER_QUIZ_BASE}/api/generate-quiz`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ user_id: userId }),
-  });
-  if (!res.ok) throw new Error(`Career quiz API error: ${res.status}`);
-  const json: DynamicQuizApiResponse = await res.json();
-  return json.data.questions.map((q) => ({
-    id: String(q.id),
-    question: q.question_text,
-    options: q.options,
-  }));
-}
-
 // --- TRAINER HELPERS ---
 async function trainerRequest<T = any>(
   path: string,
@@ -227,7 +195,26 @@ export const api = {
 
   // Quiz
   submitQuiz: (body: any) => request("/quiz", { method: "POST", body: JSON.stringify(body) }),
-  getDynamicQuiz: (userId: string) => fetchDynamicQuiz(userId),
+  
+  // Gets the questions that were generated during onboarding (stored in user profile)
+  getDynamicQuiz: async (userId: string) => {
+    const me = await request("/api/me");
+    if (me?.userDetails?.dynamicQuizData) {
+      // Map the generic structure to our frontend interface
+      // Note: Adjust 'questions' path if your API returns { data: { questions: [] } } or just { questions: [] }
+      const quizData = me.userDetails.dynamicQuizData;
+      // Handle different possible structures from the external API
+      const questionsArray = Array.isArray(quizData) ? quizData : (quizData.questions || quizData.data?.questions || []);
+      
+      return questionsArray.map((q: any, index: number) => ({
+        id: q.id || String(index),
+        question: q.question_text || q.question || "Question",
+        options: q.options || []
+      }));
+    }
+    return [];
+  },
+
   saveDynamicQuiz: (body: any) => request("/api/me", { method: "POST", body: JSON.stringify(body) }),
 
   // Auth Providers
@@ -247,7 +234,7 @@ export const api = {
   // Videos
   searchVideos: (query: string) => request<YouTubeVideo[]>(`/api/videos/search?q=${encodeURIComponent(query)}`),
 
-  // ✅ JOBS (Newly Added)
+  // Jobs
   getJobs: (userSector: string, limit: number = 6) => 
     request<{ success: boolean; mappedSector: string; jobs: Job[] }>("/api/jobs", {
       method: "POST",

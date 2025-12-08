@@ -1,5 +1,3 @@
-// src/pages/learner/OnboardingPage.tsx
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
@@ -15,6 +13,7 @@ import {
 } from "@/data/dummyData";
 import { api } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
+import { Sparkles } from "lucide-react";
 
 type FormDataType = {
   ageRange: string;
@@ -46,7 +45,6 @@ const OnboardingPage = () => {
       const raw = localStorage.getItem("onboardingData");
       if (raw) {
         const parsed = JSON.parse(raw);
-        // Sanitize to ensure we only keep fields we care about
         return {
             ageRange: parsed.ageRange || "",
             qualification: parsed.qualification || "",
@@ -108,8 +106,7 @@ const OnboardingPage = () => {
       },
       skills: data.selectedSkills,
       interestSectors: data.interests,
-      // Sending minimal required structure for removed fields if backend enforces them
-      preferredLanguage: "English", // Defaulting since removed from UI
+      preferredLanguage: "English",
       state: "Not Provided",
       district: "Not Provided",
       careerGoal: "Not Provided"
@@ -117,7 +114,6 @@ const OnboardingPage = () => {
   };
 
   const handleSubmit = async () => {
-    // Basic validation
     if (
       !formData.ageRange ||
       !formData.qualification ||
@@ -136,21 +132,20 @@ const OnboardingPage = () => {
     setSaving(true);
     try {
       const payload = buildPayloadForApi(formData);
+      // This call now triggers the external API in the backend
       await api.postMe(payload);
 
-      // Refresh auth state
       try {
         await refreshUser();
       } catch (refreshErr) {
         console.error("refreshUser failed", refreshErr);
       }
 
-      // Clear local storage
       localStorage.removeItem("onboardingData");
 
       toast({
         title: "Profile saved",
-        description: "Proceeding to the quiz...",
+        description: "Your personalized quiz is ready.",
       });
 
       navigate("/quiz", { replace: true });
@@ -180,8 +175,6 @@ const OnboardingPage = () => {
 
         <Card className="p-8 shadow-xl border-t-4 border-t-blue-500">
           <div className="space-y-8">
-            
-            {/* Section 1: Demographics & Status */}
             <div className="grid md:grid-cols-2 gap-6">
               <div>
                 <Label className="text-sm font-semibold text-gray-700 mb-2 block">
@@ -219,7 +212,6 @@ const OnboardingPage = () => {
               </div>
             </div>
 
-            {/* Section 2: Education */}
             <div className="grid md:grid-cols-2 gap-6">
               <div>
                 <Label className="text-sm font-semibold text-gray-700 mb-2 block">
@@ -260,7 +252,6 @@ const OnboardingPage = () => {
 
             <div className="border-t border-gray-100 my-6"></div>
 
-            {/* Section 3: Skills */}
             <div>
               <Label className="text-lg font-semibold text-gray-900 mb-4 block">
                 Current Skills
@@ -294,7 +285,6 @@ const OnboardingPage = () => {
               </div>
             </div>
 
-            {/* Section 4: Interests */}
             <div>
               <Label className="text-lg font-semibold text-gray-900 mb-4 block">
                 Interested Sectors
@@ -328,14 +318,18 @@ const OnboardingPage = () => {
               </div>
             </div>
 
-            {/* Action Button */}
             <div className="pt-6">
               <Button 
                 className="w-full h-12 text-lg bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg transition-all hover:scale-[1.01]"
                 onClick={handleSubmit}
                 disabled={saving}
               >
-                {saving ? "Saving Profile..." : "Complete Profile"}
+                {saving ? (
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="w-5 h-5 animate-spin" />
+                    Generating your quiz...
+                  </div>
+                ) : "Complete Profile"}
               </Button>
             </div>
 
