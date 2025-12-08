@@ -25,7 +25,7 @@ import ProfilePage from "./pages/learner/ProfilePage";
 import ProgressPage from "./pages/learner/ProgressPage";
 import FeedbackPage from "./pages/learner/FeedbackPage";
 import NotFound from "./pages/NotFound";
-import QuizPage from "./pages/learner/QuizPage";
+import SwipeQuizPage from "./pages/learner/SwipeQuizPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import OAuthSuccess from "./pages/auth/OAuthSuccess";
 import AdaptiveQuizPage from "./pages/learner/AdaptiveQuizPage";
@@ -72,7 +72,7 @@ const App: React.FC = () => (
               path="/quiz"
               element={
                 <ProtectedRoute requireOnboarded={true} requireQuiz={false}>
-                  <QuizPage />
+                  <SwipeQuizPage />
                 </ProtectedRoute>
               }
             />

@@ -19,6 +19,8 @@ const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:5000";
 
 // external LLM quiz service (Python API)
 const CAREER_QUIZ_BASE = "https://career-quiz-api.onrender.com";
+// external swipe-logic service (HF Space)
+const SWIPE_LOGIC_BASE = "https://imran-decoder-swip.hf.space";
 
 export interface DynamicQuizApiResponse {
   status: string;
@@ -37,6 +39,20 @@ export interface DynamicQuizQuestion {
   id: string;
   question: string;
   options: string[];
+}
+
+export type SwipeStage = string;
+export interface SwipeRequest {
+  user_id: string;
+  current_stage: SwipeStage;
+  liked_cards: string[];
+  disliked_cards: string[];
+}
+
+export interface SwipeResponse {
+  cards: string[];
+  next_stage?: SwipeStage;
+  done?: boolean;
 }
 
 // ---------------------------------------------------------
@@ -170,6 +186,35 @@ async function fetchDynamicQuiz(userId: string): Promise<DynamicQuizQuestion[]> 
     question: q.question_text,
     options: q.options,
   }));
+}
+
+async function fetchSwipeLogic(body: SwipeRequest): Promise<SwipeResponse> {
+  const res = await fetch(`${SWIPE_LOGIC_BASE}/api/swipe-logic`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(`Swipe logic API error: ${res.status} ${text}`);
+  }
+
+  let json: any = null;
+  try {
+    json = await res.json();
+  } catch {
+    json = null;
+  }
+
+  const cards: string[] = Array.isArray(json)
+    ? json
+    : json?.cards || json?.data?.cards || json?.sentences || [];
+
+  const next_stage: SwipeStage | undefined = json?.next_stage || json?.data?.next_stage;
+  const done: boolean = Boolean(json?.done || json?.data?.done);
+
+  return { cards, next_stage, done };
 }
 
 export interface YouTubeVideo {
@@ -319,6 +364,9 @@ export const api = {
 
   saveDynamicQuiz: (body: any) =>
     request("/api/me", { method: "POST", body: JSON.stringify(body) }),
+
+  // ─────────── swipe logic (HF) ───────────
+  getSwipeLogic: (body: SwipeRequest) => fetchSwipeLogic(body),
 
   startGoogle: () => `${API_BASE}/auth/google`,
 
