@@ -1,48 +1,42 @@
-import { createContext, useContext, useState, ReactNode } from "react";
+import { useLanguage } from "@/context/LanguageContext";
 
-interface TranslationContextType {
-  lang: string;
-  setLang: (l: string) => void;
-  translateText: (text: string) => Promise<string>;
-}
-
-const TranslationContext = createContext<TranslationContextType | null>(null);
-
-export const TranslationProvider = ({ children }: { children: ReactNode }) => {
-  const [lang, setLang] = useState("en");
-  const cache = new Map<string, string>();
-
-  const translateText = async (text: string) => {
-    const key = `${lang}-${text}`;
-    if (cache.has(key)) return cache.get(key)!;
-
-    if (lang === "en") return text;
-
-    const res = await fetch("https://libretranslate.de/translate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        q: text,
-        source: "en",
-        target: lang,
-        format: "text"
-      })
-    });
-
-    const data = await res.json();
-    cache.set(key, data.translatedText);
-    return data.translatedText;
-  };
+const AutoTranslator = () => {
+  const { setLang, lang } = useLanguage();
 
   return (
-    <TranslationContext.Provider value={{ lang, setLang, translateText }}>
-      {children}
-    </TranslationContext.Provider>
+    <div className="flex gap-2 items-center">
+      <button
+        onClick={() => setLang("en")}
+        className={lang === "en" ? "font-bold underline" : ""}
+      >
+        EN
+      </button>
+      <button
+        onClick={() => setLang("hi")}
+        className={lang === "hi" ? "font-bold underline" : ""}
+      >
+        हिंदी
+      </button>
+      <button
+        onClick={() => setLang("mr")}
+        className={lang === "mr" ? "font-bold underline" : ""}
+      >
+        मराठी
+      </button>
+      <button
+        onClick={() => setLang("gu")}
+        className={lang === "gu" ? "font-bold underline" : ""}
+      >
+        ગુજરાતી
+      </button>
+      <button
+        onClick={() => setLang("ta")}
+        className={lang === "ta" ? "font-bold underline" : ""}
+      >
+        தமிழ்
+      </button>
+    </div>
   );
 };
 
-export const useTranslator = () => {
-  const ctx = useContext(TranslationContext);
-  if (!ctx) throw new Error("useTranslator must be inside provider");
-  return ctx;
-};
+export default AutoTranslator;

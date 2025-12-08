@@ -1,0 +1,25 @@
+[
+  {
+    "id": "n1",
+    "type": "process",
+    "position": { "x": 50, "y": 250 },
+    "data": {
+      "label": "HashJoin",
+      "value": "0.78 MB",
+      "progress": 40,
+      "iconType": "join"
+    }
+  },
+  {
+    "id": "n2",
+    "type": "process",
+    "position": { "x": 350, "y": 60 },
+    "data": {
+      "label": "GatherMerge",
+      "value": "1.40 MB",
+      "progress": 75,
+      "iconType": "merge",
+      "color": "#ef4444"
+    }
+  }
+]

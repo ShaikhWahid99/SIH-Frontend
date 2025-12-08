@@ -6,16 +6,7 @@ import { TagChip } from '@/components/shared/TagChip';
 import { ProgressBar } from '@/components/shared/ProgressBar';
 import Mindmap from '@/components/shared/Mindmap';
 import type { MindmapNode } from '@/components/shared/Mindmap';
-import {
-  ArrowLeft,
-  Clock,
-  GraduationCap,
-  Briefcase,
-  Calendar,
-  CheckCircle,
-  Loader2,
-  GitGraph
-} from 'lucide-react';
+import { ArrowLeft, Clock, GraduationCap, Briefcase, Calendar, CheckCircle, Circle, Loader2, GitGraph } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import { useLanguage } from '@/context/LanguageContext';
@@ -37,6 +28,9 @@ interface Pathway {
 }
 
 // ✅ GRAPH BUILDER (UNCHANGED)
+// ... inside pages/learner/PathwayDetailPage.tsx
+
+// ✅ GRAPH BUILDER (UNCHANGED)
 function buildHierarchy(nodes: any[], links: any[], rootId: string): MindmapNode | null {
   const nodeMap = new Map<string, MindmapNode>();
 
@@ -44,7 +38,7 @@ function buildHierarchy(nodes: any[], links: any[], rootId: string): MindmapNode
     nodeMap.set(n.id, {
       id: n.id,
       title: n.title || n.name || 'Unknown',
-      code: n.code,
+      code: n.code, // capture code if exists for sorting
       children: []
     });
   });
@@ -63,59 +57,10 @@ const PathwayDetailPage = () => {
   const { lang, translate } = useLanguage(); // ✅ GLOBAL LANGUAGE
 
   const [pathway, setPathway] = useState<Pathway | null>(null);
-  const [graphData, setGraphData] = useState<MindmapNode | null>(null);
+  const [graphData, setGraphData] = useState<MindmapNode | null>(null); // State for Mindmap
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // ✅ ORIGINAL UI TEXT
-  const originalText = {
-    back: 'Back to Pathways',
-    duration: 'Duration',
-    nsqf: 'NSQF Level',
-    sector: 'Sector',
-    validTill: 'Valid Till',
-    moduleMap: 'Module Map',
-    explore: 'Explore the connections between modules in this qualification.',
-    yourProgress: 'Your Progress',
-    stepsCompleted: 'steps completed',
-    learningPath: 'Learning Path',
-    completed: 'Completed',
-    inProgress: 'In Progress',
-    review: 'Review',
-    continue: 'Continue',
-    start: 'Start',
-    jobOpportunities: 'Job Opportunities',
-    skillDemand: 'Skill Demand',
-    notFound: 'Pathway not found'
-  };
-
-  const [uiText, setUiText] = useState(originalText);
-
-  // ✅ AUTO TRANSLATE UI
-  useEffect(() => {
-    let mounted = true;
-
-    async function translateUI() {
-      if (lang === 'en') {
-        mounted && setUiText(originalText);
-        return;
-      }
-
-      const translated: any = {};
-      for (const key in originalText) {
-        translated[key] = await translate(originalText[key as keyof typeof originalText]);
-      }
-
-      mounted && setUiText(translated);
-    }
-
-    translateUI();
-    return () => {
-      mounted = false;
-    };
-  }, [lang]);
-
-  // ✅ FETCH DATA (UNCHANGED)
   useEffect(() => {
     if (!id) return;
 
@@ -123,19 +68,37 @@ const PathwayDetailPage = () => {
       .then((data) => {
         setPathway({
           ...data,
-          mode: data.mode || 'Online',
+          mode: data.mode || 'Online', 
           steps: data.steps || [
-            { title: 'Introduction', provider: 'Internal', duration: '2h', nsqfLevel: 1, mode: 'Online' }
+             { title: 'Introduction', provider: 'Internal', duration: '2h', nsqfLevel: 1, mode: 'Online' },
+             { title: 'Core Concepts', provider: 'Internal', duration: '4h', nsqfLevel: 2, mode: 'Online' }
           ],
-          jobOpportunities: data.jobOpportunities || ['Data Analyst']
+          jobOpportunities: data.jobOpportunities || ['Data Analyst', 'Junior Developer'] 
         });
-
+        
+        // 2. Fetch Graph Data (After details load, to ensure we have the ID context)
         return api.getPathwayGraph(id);
       })
       .then((res) => {
-        if (res?.nodes?.length) {
-          const hierarchy = buildHierarchy(res.nodes, res.links, id);
+        // Convert flat graph to hierarchy
+        if (res && res.nodes && res.nodes.length > 0) {
+          const rootNodeId = id; // The current pathway ID is the root
+          // Fallback: If ID mismatch in graph (rare), find node with type='root' or just first one
+          const hierarchy = buildHierarchy(res.nodes, res.links, rootNodeId);
           setGraphData(hierarchy);
+
+          // 2. List Logic (UPDATED)
+          const modules = res.nodes
+            // ✅ FILTER: Exclude the node that matches the current Page ID (the Root)
+            .filter((n: any) => n.id !== id) 
+            .map((n: any) => ({
+               id: n.id,
+               title: n.title || n.label || n.name,
+               code: n.code,
+               link: n.link
+            }));
+            
+          setFlatModules(modules);
         }
         setLoading(false);
       })
@@ -144,14 +107,6 @@ const PathwayDetailPage = () => {
         setLoading(false);
       });
   }, [id]);
-
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
-  }
 
   if (error || !pathway) {
     return (
@@ -204,15 +159,18 @@ const PathwayDetailPage = () => {
         </Card>
       </div>
 
-      {/* ✅ MODULE MAP */}
+      {/* NEW SECTION: Learning Graph (Vertical) */}
       {graphData && (
-        <Card className="p-6">
-          <h2 className="text-xl font-bold mb-2">
-            <GitGraph className="inline w-5 h-5" /> {uiText.moduleMap}
-          </h2>
-          <p className="text-sm text-muted-foreground">{uiText.explore}</p>
-          <div className="h-[600px] mt-4">
-            <Mindmap data={graphData} width={1000} height={600} />
+        <Card className="p-6 overflow-hidden">
+          <div className="flex items-center gap-2 mb-4">
+            <GitGraph className="w-6 h-6 text-primary" />
+            <h2 className="text-xl font-bold text-foreground">Module Map</h2>
+          </div>
+          <p className="text-sm text-muted-foreground mb-4">
+            Explore the connections between modules in this qualification. Scroll to zoom, drag to pan.
+          </p>
+          <div className="h-[600px] border rounded-lg bg-slate-50 relative">
+             <Mindmap data={graphData} width={1000} height={600} />
           </div>
         </Card>
       )}

@@ -133,13 +133,9 @@ const DashboardPage = () => {
         {recommendedPathway ? (
           <div className="mt-4 flex gap-3">
             <Link to={`/learner/pathways/${recommendedPathway.id}`} className="flex-1">
-              <Button className="w-full" size="lg">
-                {uiText.startLearning}
-              </Button>
+              <Button className="w-full" size="lg">Start Learning</Button>
             </Link>
-            <Button variant="outline" size="lg">
-              {uiText.viewAll}
-            </Button>
+            <Button variant="outline" size="lg">View All Pathways</Button>
           </div>
         ) : (
           <div className="mt-4 flex gap-3">

@@ -1,4 +1,17 @@
-import { getAccessToken, getRefreshToken, saveTokens, clearTokens } from "./auth";
+import {
+  getAccessToken,
+  getRefreshToken,
+  saveTokens,
+  clearTokens,
+} from "./auth";
+
+import {
+  getTrainerAccessToken,
+  getTrainerRefreshToken,
+  saveTrainerTokens,
+  clearTrainerTokens,
+} from "./auth";
+
 
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:5000";
 
@@ -24,6 +37,9 @@ export interface DynamicQuizQuestion {
   options: string[];
 }
 
+// ---------------------------------------------------------
+// LEARNER HEADER BUILDER
+// ---------------------------------------------------------
 function buildHeaders(opts: RequestInit = {}) {
   const token = getAccessToken();
   const headers: Record<string, string> = {
@@ -38,15 +54,38 @@ function buildHeaders(opts: RequestInit = {}) {
   return headers;
 }
 
+// ---------------------------------------------------------
+// TRAINER HEADER BUILDER
+// ---------------------------------------------------------
+function buildTrainerHeaders(opts: RequestInit = {}) {
+  const token = getTrainerAccessToken();
+  const headers: Record<string, string> = {
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...(opts.headers ? (opts.headers as Record<string, string>) : {}),
+  };
+
+  if ((opts.body || (opts as any).json) && !headers["Content-Type"]) {
+    headers["Content-Type"] = "application/json";
+  }
+
+  return headers;
+}
+
+// ---------------------------------------------------------
+// RAW FETCH
+// ---------------------------------------------------------
 async function rawFetch(path: string, opts: RequestInit = {}) {
   const res = await fetch(API_BASE + path, {
     headers: buildHeaders(opts),
     ...opts,
   });
 
-  const text = await res.text().catch(() => "");
-  let data: any = null;
+  let text = "";
+  try {
+    text = await res.text();
+  } catch {}
 
+  let data = null;
   try {
     data = text ? JSON.parse(text) : null;
   } catch {
@@ -56,6 +95,9 @@ async function rawFetch(path: string, opts: RequestInit = {}) {
   return { res, data };
 }
 
+// ---------------------------------------------------------
+// LEARNER REQUEST WRAPPER
+// ---------------------------------------------------------
 async function request<T = any>(
   path: string,
   opts: RequestInit = {},
@@ -73,39 +115,36 @@ async function request<T = any>(
     }
   }
 
-  if (!res.ok) {
-    const message =
-      data?.message || (typeof data === "string" ? data : res.statusText);
-    const err: any = new Error(message);
-    err.status = res.status;
-    err.payload = data;
-    throw err;
-  }
+  if (!res.ok) throw new Error(data?.message || "Request failed");
 
   return data;
 }
 
+// ---------------------------------------------------------
+// LEARNER TOKEN REFRESH
+// ---------------------------------------------------------
 async function refreshSession() {
   const refreshToken = getRefreshToken();
   if (!refreshToken) return false;
 
   try {
-    const { res, data } = await rawFetch("/auth/refresh", {
+    const res = await fetch(API_BASE + "/auth/refresh", {
       method: "POST",
-      body: JSON.stringify({ refreshToken }),
       headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ refreshToken }),
+      // headers: { "Content-Type": "application/json" },
     });
 
-    if (!res.ok) return false;
+    const data = await res.json();
 
-    if (data && data.accessToken && data.refreshToken) {
+    if (!res.ok) return false;
+    if (data.accessToken && data.refreshToken) {
       saveTokens(data.accessToken, data.refreshToken);
       return true;
     }
 
     return false;
-  } catch (e) {
-    console.error("refreshSession error:", e);
+  } catch {
     return false;
   }
 }
@@ -131,8 +170,86 @@ async function fetchDynamicQuiz(userId: string): Promise<DynamicQuizQuestion[]> 
   }));
 }
 
-export const api = {
+export interface YouTubeVideo {
+  title: string;
+  url: string;
+  thumbnail: string;
+  videoId: string;
+  views: string;
+}
+
   // ─────────── auth ───────────
+// ---------------------------------------------------------
+// TRAINER REQUEST WRAPPER
+// ---------------------------------------------------------
+async function trainerRequest<T = any>(
+  path: string,
+  opts: RequestInit = {},
+  retry = true
+): Promise<T> {
+  const res = await fetch(API_BASE + path, {
+    headers: buildTrainerHeaders(opts),
+    ...opts,
+  });
+
+  let text = "";
+  try {
+    text = await res.text();
+  } catch {}
+
+  let data = null;
+  try {
+    data = text ? JSON.parse(text) : null;
+  } catch {
+    data = text;
+  }
+
+  if (res.status === 401 && retry) {
+    const ok = await trainerRefreshSession();
+    if (ok) return trainerRequest<T>(path, opts, false);
+
+    clearTrainerTokens();
+    throw new Error("Trainer session expired");
+  }
+
+  if (!res.ok) throw new Error(data?.message || "Trainer API error");
+
+  return data;
+}
+
+// ---------------------------------------------------------
+// TRAINER TOKEN REFRESH
+// ---------------------------------------------------------
+async function trainerRefreshSession() {
+  const refreshToken = getTrainerRefreshToken();
+  if (!refreshToken) return false;
+
+  try {
+    const res = await fetch(API_BASE + "/trainer/refresh", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ refreshToken }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) return false;
+    if (data.accessToken && data.refreshToken) {
+      saveTrainerTokens(data.accessToken, data.refreshToken);
+      return true;
+    }
+
+    return false;
+  } catch {
+    return false;
+  }
+}
+
+// ---------------------------------------------------------
+// EXPORTED API
+// ---------------------------------------------------------
+export const api = {
+  // learner auth
   register: (body: any) =>
     request("/auth/register", {
       method: "POST",
@@ -161,11 +278,38 @@ export const api = {
   getMe: () => request("/api/me"),
 
   postMe: (body: any) =>
-    request("/api/me", { method: "POST", body: JSON.stringify(body) }),
+    request("/api/me", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+
+  // trainer auth
+  trainerLogin: (body: any) =>
+    trainerRequest("/trainer/login", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+
+  trainerGetMe: () => trainerRequest("/trainer/me"),
+
+  trainerRefreshSession: () =>
+    trainerRequest("/trainer/refresh", {
+      method: "POST",
+      body: JSON.stringify({ refreshToken: getTrainerRefreshToken() }),
+    }),
+
+  trainerLogout: () =>
+    trainerRequest("/trainer/logout", {
+      method: "POST",
+      body: JSON.stringify({ refreshToken: getTrainerRefreshToken() }),
+    }),
 
   // ─────────── static quiz ───────────
   submitQuiz: (body: any) =>
-    request("/quiz", { method: "POST", body: JSON.stringify(body) }),
+    request("/quiz", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
 
   // ─────────── dynamic LLM quiz ───────────
   getDynamicQuiz: (userId: string) => fetchDynamicQuiz(userId),
@@ -183,4 +327,8 @@ export const api = {
 
   // NEW: Get Graph Data
   getPathwayGraph: (id: string) => request<{ nodes: any[]; links: any[] }>(`/api/pathways/${id}/graph`),
+
+  getCourseById: (id: string) => request<any>(`/api/courses/${id}`), 
+
+  searchVideos: (query: string) => request<YouTubeVideo[]>(`/api/videos/search?q=${encodeURIComponent(query)}`),
 };
