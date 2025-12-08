@@ -7,6 +7,9 @@ import Mindmap from '@/components/shared/Mindmap';
 import type { MindmapNode } from '@/components/shared/Mindmap';
 import { ModuleTimeline } from '@/components/shared/ModuleTimeline';
 import { CourseCard } from '@/components/shared/CourseCard';
+import { JobWidget, JobProps } from '@/components/shared/JobWidget';
+import { Skeleton } from '@/components/ui/skeleton';
+
 import {
   ArrowLeft,
   Clock,
@@ -16,7 +19,7 @@ import {
   GitGraph,
   List,
   Sparkles,
-  ArrowRight // ✅ Ensure this is imported
+  ArrowRight
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
@@ -38,10 +41,8 @@ interface Pathway {
   jobOpportunities?: string[];
 }
 
-// Helper to convert Flat Graph Data -> Tree Hierarchy
 function buildHierarchy(nodes: any[], links: any[], rootId: string): MindmapNode | null {
   const nodeMap = new Map<string, MindmapNode>();
-
   nodes.forEach(n => {
     nodeMap.set(n.id, {
       id: n.id,
@@ -51,13 +52,11 @@ function buildHierarchy(nodes: any[], links: any[], rootId: string): MindmapNode
       children: []
     });
   });
-
   links.forEach(l => {
     const parent = nodeMap.get(l.source);
     const child = nodeMap.get(l.target);
     if (parent && child) parent.children?.push(child);
   });
-
   return nodeMap.get(rootId) || null;
 }
 
@@ -71,6 +70,10 @@ const PathwayDetailPage = () => {
   const [graphData, setGraphData] = useState<MindmapNode | null>(null);
   const [flatModules, setFlatModules] = useState<any[]>([]);
   const [skillIndiaCourses, setSkillIndiaCourses] = useState<any[]>([]);
+  
+  const [jobs, setJobs] = useState<JobProps[]>([]);
+  const [loadingJobs, setLoadingJobs] = useState(false);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -85,6 +88,9 @@ const PathwayDetailPage = () => {
     yourProgress: 'Your Progress',
     stepsCompleted: 'steps completed',
     jobOpportunities: 'Job Opportunities',
+    relatedRoles: 'Related Roles:',
+    openPositions: 'Open Positions via NCS',
+    viewAllJobs: 'View All Jobs',
     skillDemand: 'Skill Demand',
     notFound: 'Pathway not found',
     skillIndiaTitle: 'Recommended Skill India Courses',
@@ -96,25 +102,19 @@ const PathwayDetailPage = () => {
   // AUTO TRANSLATE UI
   useEffect(() => {
     let mounted = true;
-
     async function translateUI() {
       if (lang === 'en') {
         mounted && setUiText(originalText);
         return;
       }
-
       const translated: any = {};
       for (const key in originalText) {
         translated[key] = await translate(originalText[key as keyof typeof originalText]);
       }
-
       mounted && setUiText(translated);
     }
-
     translateUI();
-    return () => {
-      mounted = false;
-    };
+    return () => { mounted = false; };
   }, [lang]);
 
   // FETCH DATA
@@ -130,6 +130,18 @@ const PathwayDetailPage = () => {
           steps: data.steps || [],
           jobOpportunities: data.jobOpportunities || ['Data Analyst']
         });
+
+        // ✅ Fetch Jobs (We request 4, but slice later to be safe)
+        if (data.sector) {
+            setLoadingJobs(true);
+            api.getJobs(data.sector, 4) 
+                .then(res => {
+                    if (res.success) setJobs(res.jobs);
+                })
+                .catch(err => console.error("Job fetch failed", err))
+                .finally(() => setLoadingJobs(false));
+        }
+
         return api.getPathwayGraph(id);
       })
       .then((res) => {
@@ -180,8 +192,7 @@ const PathwayDetailPage = () => {
   const progress = (completedSteps / totalSteps) * 100;
 
   return (
-    <div className="space-y-6">
-
+    <div className="space-y-6 pb-10">
       {/* HEADER */}
       <Link to="/learner/pathways" className="inline-flex items-center gap-2 text-muted-foreground hover:text-primary">
         <ArrowLeft className="w-4 h-4" />
@@ -189,7 +200,6 @@ const PathwayDetailPage = () => {
       </Link>
 
       <h1 className="text-3xl font-bold">{pathway.title}</h1>
-
       <p className="text-muted-foreground">{pathway.description}</p>
 
       {/* KEY INFO */}
@@ -198,17 +208,14 @@ const PathwayDetailPage = () => {
           <Clock className="w-4 h-4 inline" /> {uiText.duration}
           <p className="font-bold">{pathway.duration}</p>
         </Card>
-
         <Card className="p-4">
           <GraduationCap className="w-4 h-4 inline" /> {uiText.nsqf}
           <p className="font-bold">Level {pathway.nsqfLevel}</p>
         </Card>
-
         <Card className="p-4">
           <Briefcase className="w-4 h-4 inline" /> {uiText.sector}
           <p className="font-bold">{pathway.sector}</p>
         </Card>
-
         <Card className="p-4">
           <Calendar className="w-4 h-4 inline" /> {uiText.validTill}
           <p className="font-bold">{pathway.validTill || 'N/A'}</p>
@@ -261,7 +268,7 @@ const PathwayDetailPage = () => {
         </Card>
       )}
 
-      {/* ✅ SKILL INDIA RECOMMENDATIONS SECTION (Fixed Duplication) */}
+      {/* 1. SKILL INDIA RECOMMENDATIONS */}
       {skillIndiaCourses.length > 0 && (
         <div className="space-y-4">
           <div className="border-l-4 border-orange-500 pl-4 flex justify-between items-end">
@@ -274,8 +281,8 @@ const PathwayDetailPage = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {skillIndiaCourses.map((course) => (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {skillIndiaCourses.slice(0, 4).map((course) => (
               <CourseCard
                 key={course.id}
                 {...course}
@@ -284,8 +291,7 @@ const PathwayDetailPage = () => {
             ))}
           </div>
 
-          {/* ✅ VIEW MORE BUTTON */}
-          <div className="flex justify-center pt-4">
+          <div className="flex justify-center pt-2 pb-6 border-b">
             <Link to="/learner/skill-india">
               <Button variant="outline" className="gap-2 border-orange-200 text-orange-600 hover:text-orange-700 hover:bg-orange-50">
                 Explore All Skill India Courses <ArrowRight className="w-4 h-4" />
@@ -295,21 +301,41 @@ const PathwayDetailPage = () => {
         </div>
       )}
 
-      {/* PROGRESS */}
-      <Card className="p-6">
+      {/* 2. ✅ JOB OPPORTUNITIES (Limited to 4) */}
+      <div className="space-y-4">
+        <h2 className="text-2xl font-bold flex items-center gap-2">
+            <Briefcase className="w-6 h-6 text-primary" />
+            {uiText.jobOpportunities}
+        </h2>
+        
+        {/* Live Jobs Grid - 4 Columns */}
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {loadingJobs ? (
+                [1, 2, 3, 4].map(i => <Skeleton key={i} className="h-48 w-full rounded-xl" />)
+            ) : jobs.length > 0 ? (
+                // ✅ FORCE SLICE TO 4 ITEMS
+                jobs.slice(0, 4).map(job => (
+                    <JobWidget key={job.id} {...job} />
+                ))
+            ) : (
+                <div className="col-span-4 text-center py-8 bg-muted/30 rounded-lg border border-dashed">
+                    <p className="text-muted-foreground">No active job listings found for {pathway.sector}.</p>
+                </div>
+            )}
+        </div>
+
+        {/* View All Button */}
+        <div className="text-center pt-2">
+            <Link to="/learner/jobs">
+                <Button variant="outline">{uiText.viewAllJobs} <ArrowRight className="ml-2 w-4 h-4"/></Button>
+            </Link>
+        </div>
+      </div>
+
+      {/* 3. PROGRESS (Bottom) */}
+      <Card className="p-6 mt-8">
         <h2 className="text-xl font-bold">{uiText.yourProgress}</h2>
         <ProgressBar value={progress} label={`${completedSteps} ${uiText.stepsCompleted}`} />
-      </Card>
-
-      {/* JOB OPPORTUNITIES */}
-      <Card className="p-6">
-        <h2 className="text-xl font-bold mb-4">{uiText.jobOpportunities}</h2>
-        {pathway.jobOpportunities?.map((job, i) => (
-          <Badge key={i} className="mr-2">{job}</Badge>
-        ))}
-        <p className="mt-4">
-          {uiText.skillDemand}: <b>{pathway.skillDemand}</b>
-        </p>
       </Card>
     </div>
   );

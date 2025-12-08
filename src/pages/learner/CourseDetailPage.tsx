@@ -10,9 +10,9 @@ import { api, YouTubeVideo } from '@/lib/api';
 interface CourseData {
   id: string;
   title: string;
-  code?: string;      // Added code
-  credits?: string;   // Added credits
-  mandatory?: string; // Added mandatory status
+  code?: string;  
+  credits?: string;
+  mandatory?: string; 
   provider: string;
   duration: string;
   mode: string;

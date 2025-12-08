@@ -1,14 +1,13 @@
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { PathwayCard, PathwayCardProps } from '@/components/shared/PathwayCard';
-import { ProgressBar } from '@/components/shared/ProgressBar';
-import { Sparkles, TrendingUp, Target, RefreshCw } from 'lucide-react';
+import { Target } from 'lucide-react'; 
 import { pathways } from '@/data/dummyData';
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import { Link } from 'react-router-dom';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useLanguage } from '@/context/LanguageContext'; // ✅ GLOBAL LANGUAGE
+import { useLanguage } from '@/context/LanguageContext';
 
 function normalize(item: unknown): PathwayCardProps {
   const obj = (item ?? {}) as Record<string, unknown>;
@@ -33,19 +32,14 @@ function normalize(item: unknown): PathwayCardProps {
 const DashboardPage = () => {
   const [recommendedPathway, setRecommendedPathway] = useState<PathwayCardProps | null>(null);
   const [alternativePathways, setAlternativePathways] = useState<PathwayCardProps[]>([]);
-  const overallProgress = 35;
-
-  // ✅ GLOBAL LANGUAGE
+  
   const { lang, translate } = useLanguage();
 
-  // ✅ ORIGINAL UI TEXT
   const originalText = {
     recommended: "Recommended for You",
     startLearning: "Start Learning",
     viewAll: "View All Pathways",
-
     alternative: "Alternative Pathways",
-
     quickActions: "Quick Actions",
     updateProfile: "Update Profile",
     viewProgress: "View Detailed Progress",
@@ -54,41 +48,34 @@ const DashboardPage = () => {
 
   const [uiText, setUiText] = useState(originalText);
 
-  // ✅ AUTO TRANSLATE ON LANGUAGE CHANGE
+  // Translate UI
   useEffect(() => {
     let mounted = true;
-
     async function translateUI() {
       if (lang === "en") {
         mounted && setUiText(originalText);
         return;
       }
-
       const translated: any = {};
-
       for (const key in originalText) {
         translated[key] = await translate(originalText[key as keyof typeof originalText]);
       }
-
       mounted && setUiText(translated);
     }
-
     translateUI();
-
-    return () => {
-      mounted = false;
-    };
+    return () => { mounted = false; };
   }, [lang]);
 
-  // ✅ EXISTING DATA FETCH LOGIC (UNCHANGED)
+  // Fetch Data
   useEffect(() => {
     let mounted = true;
-    api
-      .getRecommendations()
+    
+    api.getRecommendations()
       .then((res) => {
         const items = Array.isArray(res?.items) ? res.items : [];
         if (!items.length) return;
         if (!mounted) return;
+
         const first = normalize(items[0]);
         const rest = items.slice(1, 3).map(normalize);
         setRecommendedPathway(first);
@@ -98,21 +85,18 @@ const DashboardPage = () => {
         setRecommendedPathway(normalize(pathways[0]));
         setAlternativePathways(pathways.slice(1, 3).map(normalize));
       });
-    return () => {
-      mounted = false;
-    };
+
+    return () => { mounted = false; };
   }, []);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 pb-10">
 
-      {/* ✅ RECOMMENDED PATHWAY */}
+      {/* RECOMMENDED PATHWAY */}
       <div>
         <div className="flex items-center gap-2 mb-4">
           <Target className="w-5 h-5 text-primary" />
-          <h2 className="text-2xl font-bold text-foreground">
-            {uiText.recommended}
-          </h2>
+          <h2 className="text-2xl font-bold text-foreground">{uiText.recommended}</h2>
         </div>
 
         {recommendedPathway ? (
@@ -120,47 +104,28 @@ const DashboardPage = () => {
         ) : (
           <Card className="p-6">
             <div className="space-y-4">
-              <div className="flex items-center justify-between mb-2">
-                <Skeleton className="h-6 w-40" />
-                <Skeleton className="h-4 w-20" />
-              </div>
+              <Skeleton className="h-6 w-40" />
               <Skeleton className="h-4 w-24" />
               <Skeleton className="h-10 w-full" />
             </div>
           </Card>
         )}
 
-        {recommendedPathway ? (
+        {recommendedPathway && (
           <div className="mt-4 flex gap-3">
             <Link to={`/learner/pathways/${recommendedPathway.id}`} className="flex-1">
-              <Button className="w-full" size="lg">
-                {uiText.startLearning}
-              </Button>
+              <Button className="w-full" size="lg">{uiText.startLearning}</Button>
             </Link>
             <Link to="/learner/alternate-pathways">
-                <Button variant="outline" size="lg"> {uiText.viewAll}
-                </Button>
+              <Button variant="outline" size="lg">{uiText.viewAll}</Button>
             </Link>
-
-          </div>
-        ) : (
-          <div className="mt-4 flex gap-3">
-            <Button className="flex-1" size="lg" disabled>
-              {uiText.startLearning}
-            </Button>
-            <Button variant="outline" size="lg" disabled>
-              {uiText.viewAll}
-            </Button>
           </div>
         )}
       </div>
 
-      {/* ✅ ALTERNATIVE PATHWAYS */}
+      {/* ALTERNATIVE PATHWAYS */}
       <div>
-        <h2 className="text-2xl font-bold text-foreground mb-4">
-          {uiText.alternative}
-        </h2>
-
+        <h2 className="text-2xl font-bold text-foreground mb-4">{uiText.alternative}</h2>
         <div className="grid md:grid-cols-2 gap-6">
           {alternativePathways.length ? (
             alternativePathways.map((pathway) => (
@@ -169,40 +134,28 @@ const DashboardPage = () => {
           ) : (
             [0, 1].map((i) => (
               <Card key={i} className="p-6">
-                <div className="space-y-4">
-                  <Skeleton className="h-6 w-40" />
-                  <Skeleton className="h-4 w-24" />
-                  <Skeleton className="h-10 w-full" />
-                </div>
+                 <div className="space-y-4">
+                    <Skeleton className="h-6 w-40" />
+                    <Skeleton className="h-10 w-full" />
+                 </div>
               </Card>
             ))
           )}
         </div>
       </div>
 
-      {/* ✅ QUICK ACTIONS */}
+      {/* QUICK ACTIONS */}
       <Card className="p-6">
-        <h2 className="text-xl font-bold text-foreground mb-4">
-          {uiText.quickActions}
-        </h2>
-
+        <h2 className="text-xl font-bold text-foreground mb-4">{uiText.quickActions}</h2>
         <div className="grid md:grid-cols-3 gap-4">
           <Link to="/learner/profile">
-            <Button variant="outline" className="w-full justify-start">
-              {uiText.updateProfile}
-            </Button>
+            <Button variant="outline" className="w-full justify-start">{uiText.updateProfile}</Button>
           </Link>
-
           <Link to="/learner/progress">
-            <Button variant="outline" className="w-full justify-start">
-              {uiText.viewProgress}
-            </Button>
+            <Button variant="outline" className="w-full justify-start">{uiText.viewProgress}</Button>
           </Link>
-
           <Link to="/learner/feedback">
-            <Button variant="outline" className="w-full justify-start">
-              {uiText.giveFeedback}
-            </Button>
+            <Button variant="outline" className="w-full justify-start">{uiText.giveFeedback}</Button>
           </Link>
         </div>
       </Card>

@@ -1,3 +1,5 @@
+// src/lib/api.ts
+
 import {
   getAccessToken,
   getRefreshToken,
@@ -12,12 +14,10 @@ import {
   clearTrainerTokens,
 } from "./auth";
 
-
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:5000";
-
-// external LLM quiz service (Python API)
 const CAREER_QUIZ_BASE = "https://career-quiz-api.onrender.com";
 
+// --- INTERFACES ---
 export interface DynamicQuizApiResponse {
   status: string;
   user_id: string;
@@ -32,14 +32,30 @@ export interface DynamicQuizApiResponse {
 }
 
 export interface DynamicQuizQuestion {
-  id: string;       
+  id: string;
   question: string;
   options: string[];
 }
 
-// ---------------------------------------------------------
-// LEARNER HEADER BUILDER
-// ---------------------------------------------------------
+export interface YouTubeVideo {
+  title: string;
+  url: string;
+  thumbnail: string;
+  videoId: string;
+  views: string;
+}
+
+export interface Job {
+  id: string;
+  title: string;
+  company: string;
+  location: string;
+  salary: string;
+  apply_link: string;
+  description: string;
+}
+
+// --- HEADERS & FETCH HELPERS ---
 function buildHeaders(opts: RequestInit = {}) {
   const token = getAccessToken();
   const headers: Record<string, string> = {
@@ -50,13 +66,9 @@ function buildHeaders(opts: RequestInit = {}) {
   if ((opts.body || (opts as any).json) && !headers["Content-Type"]) {
     headers["Content-Type"] = "application/json";
   }
-
   return headers;
 }
 
-// ---------------------------------------------------------
-// TRAINER HEADER BUILDER
-// ---------------------------------------------------------
 function buildTrainerHeaders(opts: RequestInit = {}) {
   const token = getTrainerAccessToken();
   const headers: Record<string, string> = {
@@ -67,13 +79,9 @@ function buildTrainerHeaders(opts: RequestInit = {}) {
   if ((opts.body || (opts as any).json) && !headers["Content-Type"]) {
     headers["Content-Type"] = "application/json";
   }
-
   return headers;
 }
 
-// ---------------------------------------------------------
-// RAW FETCH
-// ---------------------------------------------------------
 async function rawFetch(path: string, opts: RequestInit = {}) {
   const res = await fetch(API_BASE + path, {
     headers: buildHeaders(opts),
@@ -91,13 +99,9 @@ async function rawFetch(path: string, opts: RequestInit = {}) {
   } catch {
     data = text;
   }
-
   return { res, data };
 }
 
-// ---------------------------------------------------------
-// LEARNER REQUEST WRAPPER
-// ---------------------------------------------------------
 async function request<T = any>(
   path: string,
   opts: RequestInit = {},
@@ -116,13 +120,9 @@ async function request<T = any>(
   }
 
   if (!res.ok) throw new Error(data?.message || "Request failed");
-
   return data;
 }
 
-// ---------------------------------------------------------
-// LEARNER TOKEN REFRESH
-// ---------------------------------------------------------
 async function refreshSession() {
   const refreshToken = getRefreshToken();
   if (!refreshToken) return false;
@@ -132,37 +132,28 @@ async function refreshSession() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ refreshToken }),
-      // headers: { "Content-Type": "application/json" },
     });
-
     const data = await res.json();
-
     if (!res.ok) return false;
     if (data.accessToken && data.refreshToken) {
       saveTokens(data.accessToken, data.refreshToken);
       return true;
     }
-
     return false;
   } catch {
     return false;
   }
 }
 
+// --- EXTERNAL SERVICES ---
 async function fetchDynamicQuiz(userId: string): Promise<DynamicQuizQuestion[]> {
   const res = await fetch(`${CAREER_QUIZ_BASE}/api/generate-quiz`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ user_id: userId }),
   });
-
-  if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    throw new Error(`Career quiz API error: ${res.status} ${text}`);
-  }
-
+  if (!res.ok) throw new Error(`Career quiz API error: ${res.status}`);
   const json: DynamicQuizApiResponse = await res.json();
-
   return json.data.questions.map((q) => ({
     id: String(q.id),
     question: q.question_text,
@@ -170,18 +161,7 @@ async function fetchDynamicQuiz(userId: string): Promise<DynamicQuizQuestion[]> 
   }));
 }
 
-export interface YouTubeVideo {
-  title: string;
-  url: string;
-  thumbnail: string;
-  videoId: string;
-  views: string;
-}
-
-  // ─────────── auth ───────────
-// ---------------------------------------------------------
-// TRAINER REQUEST WRAPPER
-// ---------------------------------------------------------
+// --- TRAINER HELPERS ---
 async function trainerRequest<T = any>(
   path: string,
   opts: RequestInit = {},
@@ -193,148 +173,84 @@ async function trainerRequest<T = any>(
   });
 
   let text = "";
-  try {
-    text = await res.text();
-  } catch {}
-
+  try { text = await res.text(); } catch {}
   let data = null;
-  try {
-    data = text ? JSON.parse(text) : null;
-  } catch {
-    data = text;
-  }
+  try { data = text ? JSON.parse(text) : null; } catch { data = text; }
 
   if (res.status === 401 && retry) {
     const ok = await trainerRefreshSession();
     if (ok) return trainerRequest<T>(path, opts, false);
-
     clearTrainerTokens();
     throw new Error("Trainer session expired");
   }
 
   if (!res.ok) throw new Error(data?.message || "Trainer API error");
-
   return data;
 }
 
-// ---------------------------------------------------------
-// TRAINER TOKEN REFRESH
-// ---------------------------------------------------------
 async function trainerRefreshSession() {
   const refreshToken = getTrainerRefreshToken();
   if (!refreshToken) return false;
-
   try {
     const res = await fetch(API_BASE + "/trainer/refresh", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ refreshToken }),
     });
-
     const data = await res.json();
-
     if (!res.ok) return false;
     if (data.accessToken && data.refreshToken) {
       saveTrainerTokens(data.accessToken, data.refreshToken);
       return true;
     }
-
     return false;
-  } catch {
-    return false;
-  }
+  } catch { return false; }
 }
 
-// ---------------------------------------------------------
-// EXPORTED API
-// ---------------------------------------------------------
+// --- EXPORTED API OBJECT ---
 export const api = {
-  // learner auth
-  register: (body: any) =>
-    request("/auth/register", {
-      method: "POST",
-      body: JSON.stringify(body),
-    }),
+  // Auth
+  register: (body: any) => request("/auth/register", { method: "POST", body: JSON.stringify(body) }),
+  login: (email: string, password: string) => request("/auth/login", { method: "POST", body: JSON.stringify({ email, password }) }),
+  logout: () => request("/auth/logout", { method: "POST", body: JSON.stringify({ refreshToken: getRefreshToken() }) }),
+  refresh: () => request("/auth/refresh", { method: "POST", body: JSON.stringify({ refreshToken: getRefreshToken() }) }),
 
-  login: (email: string, password: string) =>
-    request("/auth/login", {
-      method: "POST",
-      body: JSON.stringify({ email, password }),
-    }),
-
-  logout: () =>
-    request("/auth/logout", {
-      method: "POST",
-      body: JSON.stringify({ refreshToken: getRefreshToken() }),
-    }),
-
-  refresh: () =>
-    request("/auth/refresh", {
-      method: "POST",
-      body: JSON.stringify({ refreshToken: getRefreshToken() }),
-    }),
-
-  // ─────────── user ───────────
+  // User
   getMe: () => request("/api/me"),
+  postMe: (body: any) => request("/api/me", { method: "POST", body: JSON.stringify(body) }),
 
-  postMe: (body: any) =>
-    request("/api/me", {
-      method: "POST",
-      body: JSON.stringify(body),
-    }),
-
-  // trainer auth
-  trainerLogin: (body: any) =>
-    trainerRequest("/trainer/login", {
-      method: "POST",
-      body: JSON.stringify(body),
-    }),
-
+  // Trainer
+  trainerLogin: (body: any) => trainerRequest("/trainer/login", { method: "POST", body: JSON.stringify(body) }),
   trainerGetMe: () => trainerRequest("/trainer/me"),
+  trainerRefreshSession: () => trainerRequest("/trainer/refresh", { method: "POST", body: JSON.stringify({ refreshToken: getTrainerRefreshToken() }) }),
+  trainerLogout: () => trainerRequest("/trainer/logout", { method: "POST", body: JSON.stringify({ refreshToken: getTrainerRefreshToken() }) }),
 
-  trainerRefreshSession: () =>
-    trainerRequest("/trainer/refresh", {
-      method: "POST",
-      body: JSON.stringify({ refreshToken: getTrainerRefreshToken() }),
-    }),
-
-  trainerLogout: () =>
-    trainerRequest("/trainer/logout", {
-      method: "POST",
-      body: JSON.stringify({ refreshToken: getTrainerRefreshToken() }),
-    }),
-
-  // ─────────── static quiz ───────────
-  submitQuiz: (body: any) =>
-    request("/quiz", {
-      method: "POST",
-      body: JSON.stringify(body),
-    }),
-
-  // ─────────── dynamic LLM quiz ───────────
+  // Quiz
+  submitQuiz: (body: any) => request("/quiz", { method: "POST", body: JSON.stringify(body) }),
   getDynamicQuiz: (userId: string) => fetchDynamicQuiz(userId),
+  saveDynamicQuiz: (body: any) => request("/api/me", { method: "POST", body: JSON.stringify(body) }),
 
-  saveDynamicQuiz: (body: any) =>
-    request("/api/me", { method: "POST", body: JSON.stringify(body) }),
-
+  // Auth Providers
   startGoogle: () => `${API_BASE}/auth/google`,
 
-  // ─────────── recommendations (Neo4j) ───────────
+  // Recommendations
   getRecommendations: () => request<{ items: any[] }>("/api/recommendations"),
-
-  // Get single pathway details
   getPathwayById: (id: string) => request<any>(`/api/pathways/${id}`),
-
-  // NEW: Get Graph Data
   getPathwayGraph: (id: string) => request<{ nodes: any[]; links: any[] }>(`/api/pathways/${id}/graph`),
-
-  getCourseById: (id: string) => request<any>(`/api/courses/${id}`), 
-
-  // ✅ NEW: Skill India Recommendations
+  getCourseById: (id: string) => request<any>(`/api/courses/${id}`),
+  
+  // Skill India
   getSkillIndiaCourses: (id: string) => request<any[]>(`/api/recommendations/skill-india/${id}`),
-
-  searchVideos: (query: string) => request<YouTubeVideo[]>(`/api/videos/search?q=${encodeURIComponent(query)}`),
-
   getAllSkillIndiaCourses: (page = 1, limit = 20, search = '') => 
     request<any[]>(`/api/skill-india/all?page=${page}&limit=${limit}&search=${encodeURIComponent(search)}`),
+
+  // Videos
+  searchVideos: (query: string) => request<YouTubeVideo[]>(`/api/videos/search?q=${encodeURIComponent(query)}`),
+
+  // ✅ JOBS (Newly Added)
+  getJobs: (userSector: string, limit: number = 6) => 
+    request<{ success: boolean; mappedSector: string; jobs: Job[] }>("/api/jobs", {
+      method: "POST",
+      body: JSON.stringify({ neo4jSector: userSector, limit }),
+    }),
 };

@@ -1,3 +1,4 @@
+// src/components/shared/LearnerSidebar.tsx
 import { 
   Home, 
   BookOpen, 
@@ -6,7 +7,8 @@ import {
   MessageSquare, 
   Menu, 
   Layers, 
-  Sparkles // ✅ Import Sparkles icon
+  Sparkles,
+  Briefcase // ✅ Import Briefcase icon
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useState } from 'react';
@@ -16,13 +18,14 @@ const navItems = [
   { icon: BookOpen, label: 'Pathways', path: '/learner/pathways' },
   { icon: TrendingUp, label: 'Progress', path: '/learner/progress' },
   { icon: Layers, label: 'Alternate Pathways', path: '/learner/alternate-pathways' },
-  // ✅ NEW ITEM ADDED HERE (Orange Color)
   { 
     icon: Sparkles, 
     label: 'Skill India Library', 
     path: '/learner/skill-india',
     className: 'text-orange-600 hover:text-orange-700 hover:bg-orange-50' 
   },
+  // ✅ NEW: Job Board Link (Added here)
+  { icon: Briefcase, label: 'Job Board', path: '/learner/jobs' },
   { icon: User, label: 'Profile', path: '/learner/profile' },
   { icon: MessageSquare, label: 'Feedback', path: '/learner/feedback' },
 ];
@@ -66,7 +69,6 @@ export const LearnerSidebar = () => {
             const Icon = item.icon;
             const isActive = location.pathname === item.path;
             
-            // ✅ Logic to handle custom colors (like for Skill India)
             const customClass = item.className || 'text-muted-foreground hover:bg-muted hover:text-foreground';
             const activeClass = 'bg-primary text-primary-foreground shadow-lg';
 

@@ -32,6 +32,7 @@ import AdaptiveQuizPage from "./pages/learner/AdaptiveQuizPage";
 import RecommendedCoursesPage from "@/pages/learner/RecommendedCoursesPage";
 import SimilarCoursesPage from "@/pages/learner/SimilarCoursesPage";
 import SkillIndiaExplorer from "./pages/learner/SkillIndiaExplorer";
+import JobsPage from "./pages/learner/JobsPage";
 
 // import data from "./roadmap-test/reactRoadmap.json";
 // import RoadmapFlow from "./roadmap-test/RoadmapFlow";
@@ -188,6 +189,17 @@ const App: React.FC = () => (
                 <ProtectedRoute requireOnboarded={true} requireQuiz={true}>
                   <LearnerLayout>
                     <SkillIndiaExplorer />
+                  </LearnerLayout>
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/learner/jobs"
+              element={
+                <ProtectedRoute requireOnboarded={true} requireQuiz={true}>
+                  <LearnerLayout>
+                    <JobsPage />
                   </LearnerLayout>
                 </ProtectedRoute>
               }

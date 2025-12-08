@@ -261,7 +261,7 @@ const AdaptiveQuizPage = () => {
 
     return categories.map((category) => {
       const entry = quizResponses?.find((r) => r.category === category);
-      const answer = entry?.answer || "Not answered";
+      const answer = entry?.answer || "";
 
       let icon: any = <Sparkles className="w-5 h-5" />;
       let title = "Insight";
