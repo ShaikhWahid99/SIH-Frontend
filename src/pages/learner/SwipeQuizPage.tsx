@@ -3,22 +3,18 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { 
-  Sparkles, 
   Trash2, 
   CheckCircle2, 
   RotateCcw,
+  Sparkles,
+  Rocket,
+  Trophy,
+  Brain,
+  Clock,
+  ArrowRight,
 } from "lucide-react";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogDescription 
-} from "@/components/ui/dialog";
-import Loader from "@/components/Loader"; // Ensure this component exists
 import { api, SwipeRequest, SwipeStage } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
-import { Textarea } from "@/components/ui/textarea";
 import { 
   motion, 
   useMotionValue, 
@@ -27,6 +23,14 @@ import {
   PanInfo,
   useAnimation
 } from "framer-motion";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import Loader from "@/components/Loader";
 
 type Rating = "like" | "dislike" | null;
 
@@ -53,16 +57,15 @@ const SwipeQuizPage = () => {
   const [currentCardIndex, setCurrentCardIndex] = useState<number>(0);
   const [savedLikes, setSavedLikes] = useState<string[]>([]);
   
-  // --- FINAL STEP STATE ---
-  const [showDescriptionStep, setShowDescriptionStep] = useState<boolean>(false);
-  const [description, setDescription] = useState<string>("");
+  // --- RESULTS STATE ---
+  const [showResults, setShowResults] = useState(false);
 
-  // --- STREAMING STATE (From AdaptiveQuiz) ---
+  // --- STREAMING STATE ---
   const [showStreamDialog, setShowStreamDialog] = useState(false);
   const [streamLogs, setStreamLogs] = useState<string[]>([]);
   const [streamStatus, setStreamStatus] = useState<"idle" | "streaming" | "done" | "error">("idle");
   const [streamResult, setStreamResult] = useState<any>(null);
-
+  
   // --- ANIMATION CONTROLS ---
   const controls = useAnimation();
   const x = useMotionValue(0);
@@ -78,6 +81,86 @@ const SwipeQuizPage = () => {
   const checkOpacity = useTransform(x, [20, 150], [0.5, 1]);
 
   const allRated = useMemo(() => cards.length > 0 && ratings.every((r) => r !== null), [cards, ratings]);
+
+  // --- RESULTS SUMMARY (from AdaptiveQuiz) ---
+  const categoryColors: Record<string, string> = {
+    interest: "bg-rose-500 text-white",
+    skills: "bg-amber-500 text-white",
+    purpose: "bg-emerald-500 text-white",
+    career: "bg-[hsl(var(--primary)/0.9)] text-white",
+    personality: "bg-purple-500 text-white",
+  };
+
+  const categoryBgLight: Record<string, string> = {
+    interest: "bg-rose-50/95 border-rose-200 text-rose-900 ring-rose-100",
+    skills: "bg-amber-50/95 border-amber-200 text-amber-900 ring-amber-100",
+    purpose: "bg-emerald-50/95 border-emerald-200 text-emerald-900 ring-emerald-100",
+    career: "bg-[hsl(var(--primary)/0.1)] border-[hsl(var(--primary)/0.2)] text-[hsl(var(--primary))] ring-[hsl(var(--primary)/0.2)]",
+    personality: "bg-purple-50/95 border-purple-200 text-purple-900 ring-purple-100",
+  };
+
+  const resultsSummary = useMemo(() => {
+    const categories = ["skills", "career", "interest", "purpose", "personality"];
+    let quizResponses: any[] | null = null;
+    const localProfileRaw = localStorage.getItem("userProfile");
+    if (localProfileRaw) {
+      try {
+        const lp = JSON.parse(localProfileRaw);
+        quizResponses = lp?.quizResponses || null;
+      } catch {}
+    }
+
+    return categories.map((category) => {
+      const entry = quizResponses?.find((r) => r.category === category);
+      const answer = entry?.answer || "Not answered";
+
+      let icon: any = <Sparkles className="w-5 h-5" />;
+      let title = "Insight";
+      if (category === "skills") {
+        icon = <Rocket className="w-5 h-5" />;
+        title = "Core Skills";
+      } else if (category === "career") {
+        icon = <Trophy className="w-5 h-5" />;
+        title = "Primary Goal";
+      } else if (category === "interest") {
+        icon = <Brain className="w-5 h-5" />;
+        title = "Learning Style";
+      } else {
+        icon = <Clock className="w-5 h-5" />;
+        title = "Study Routine";
+      }
+
+      return { category, title, answer, icon };
+    });
+  }, []);
+
+  const HexItem = ({ data, index, total }: { data: any; index: number; total: number }) => {
+    const angle = index * (360 / total) - 90;
+    const radius = 180;
+    const radian = (angle * Math.PI) / 180;
+    const x = Math.cos(radian) * radius;
+    const y = Math.sin(radian) * radius;
+
+    return (
+      <motion.div
+        initial={{ opacity: 0, scale: 0, x: 0, y: 0 }}
+        animate={{ opacity: 1, scale: 1, x, y }}
+        transition={{ duration: 0.5, delay: index * 0.1 }}
+        className={`absolute w-44 p-4 rounded-xl shadow-lg border backdrop-blur-sm z-10 flex flex-col items-center text-center ${categoryBgLight[data.category]}`}
+        style={{ marginLeft: -88, marginTop: -60 }}
+      >
+        <div className={`p-2 rounded-full mb-2 ${categoryColors[data.category]}`}>
+          {data.icon}
+        </div>
+        <h3 className="font-bold text-xs uppercase tracking-wider mb-1 opacity-80">
+          {data.title}
+        </h3>
+        <p className="text-xs font-semibold leading-tight line-clamp-2">
+          {data.answer}
+        </p>
+      </motion.div>
+    );
+  };
 
   useEffect(() => {
     loadBatch("START", [], []);
@@ -120,7 +203,7 @@ const SwipeQuizPage = () => {
     }
   };
 
-  // --- LOGIC: STREAM GENERATION (Ported from AdaptiveQuiz) ---
+  // --- STREAMING RECOMMENDATION (from AdaptiveQuiz) ---
   const startRecommendationStream = async (userId: string) => {
     try {
       setShowStreamDialog(true);
@@ -137,8 +220,12 @@ const SwipeQuizPage = () => {
         }
       );
 
-      if (!res.ok) throw new Error(`Stream request failed (${res.status})`);
-      if (!res.body) throw new Error("Streaming response body is unavailable");
+      if (!res.ok) {
+        throw new Error(`Stream request failed (${res.status})`);
+      }
+      if (!res.body) {
+        throw new Error("Streaming response body is unavailable");
+      }
 
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
@@ -172,10 +259,10 @@ const SwipeQuizPage = () => {
       setStreamStatus("done");
       return finalResult;
     } catch (error: any) {
-      console.error("Stream error:", error);
+      console.error("Recommendation stream error:", error);
       setStreamStatus("error");
       toast({
-        title: "Generation failed",
+        title: "Recommendation failed",
         description: error?.message || "Could not generate recommendations.",
         variant: "destructive",
       });
@@ -183,47 +270,29 @@ const SwipeQuizPage = () => {
     }
   };
 
-  // --- LOGIC: SUBMIT FINAL (Triggered by Finish Button) ---
-  const handleFinalSubmit = async () => {
-    if (!description.trim()) return;
+  // --- LOGIC: SUBMIT FINAL ---
+  const finalizeQuiz = async (answers: { question: string; answer: string }[]) => {
     setSubmitting(true);
-    
     try {
-      let uid = user?.userDetails?._id as string | undefined;
-      if (!uid) {
-         const refreshed = await refreshUser();
-         uid = refreshed?.userDetails?._id as string | undefined;
-      }
-      if (!uid) throw new Error("User ID missing");
+      const userId = (user as any)?._id || (user as any)?.id;
+      if (!userId) throw new Error("User id is missing. Please log in again.");
 
-      // 1. Start the Visual Stream
-      const recData = await startRecommendationStream(uid);
-      if (!recData && streamStatus === 'error') throw new Error("Recommendation failed");
+      // Start recommendation stream
+      const recData = await startRecommendationStream(userId);
+      if (!recData) throw new Error("No recommendation data received");
 
-      // 2. Save Quiz Data
-      const dynamicQuizAnswers = [
-        ...savedLikes.map((text) => ({ question: text, answer: "like" })),
-        { question: "Self Description", answer: description.trim(), category: "description" },
-      ];
-      
-      await api.saveDynamicQuiz({ 
-          dynamicQuizAnswers, 
-          careerGoal: description.trim(),
-          dynamicQuizCompleted: true,
-          dynamicQuizCompletedAt: new Date().toISOString()
+      // Save quiz data
+      await api.saveDynamicQuiz({
+        dynamicQuizAnswers: answers,
+        dynamicQuizCompleted: true,
+        dynamicQuizCompletedAt: new Date().toISOString(),
       });
-      
-      await refreshUser();
-      
-      // 3. Navigate (Delay slightly so user sees 'Completed')
-      setTimeout(() => {
-        navigate("/learner/dashboard", { replace: true });
-      }, 1500);
 
+      await refreshUser();
+      navigate("/learner/dashboard", { replace: true });
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Could not save.";
       toast({ title: "Error", description: message, variant: "destructive" });
-      setShowStreamDialog(false); // Close dialog on hard error so user can retry
     } finally {
       setSubmitting(false);
     }
@@ -278,25 +347,27 @@ const SwipeQuizPage = () => {
   const goNext = async () => {
     if (!allRated || submitting) return;
     const likedBatch = cards.filter((_, i) => ratings[i] === "like");
-    const dislikedBatch = cards.filter((_, i) => ratings[i] === "dislike");
     const nextLiked = [...liked, ...likedBatch];
-    const nextDisliked = [...disliked, ...dislikedBatch];
 
     const nextIndex = STAGES.indexOf(currentStage) + 1;
     const defaultNext = STAGES[nextIndex];
     const nextStage = nextStageHint ?? defaultNext;
 
     if (!nextStage || isDoneHint || batchesCompleted + 1 >= 4) {
-      const totalLikes = Math.max(nextLiked.length, savedLikes.length);
-      // Force description step if likes are low, otherwise just show it as final step
-      setShowDescriptionStep(true);
+      // Show results page
+      setShowResults(true);
       return;
     }
 
     setLiked(nextLiked);
-    setDisliked(nextDisliked);
     setBatchesCompleted((n) => n + 1);
-    await loadBatch(nextStage, nextLiked, nextDisliked);
+    await loadBatch(nextStage, nextLiked, []);
+  };
+
+  const handleFinalSubmit = async () => {
+    const likes = Array.from(new Set([...savedLikes, ...liked]));
+    const dynamicQuizAnswers = likes.map((text) => ({ question: text, answer: "like" }));
+    await finalizeQuiz(dynamicQuizAnswers);
   };
 
   useEffect(() => {
@@ -309,20 +380,179 @@ const SwipeQuizPage = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ratings, currentCardIndex]);
 
-  // --- RENDER ---
-  if (loading) {
+  // --- RENDER: LOADING ---
+  if (loading && !showResults) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 font-sans">
-        <motion.div 
-            animate={{ rotate: 360 }}
-            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-            className="w-12 h-12 border-4 border-slate-200 border-t-indigo-600 rounded-full mb-4"
-        />
-        <p className="text-slate-500 font-medium">Preparing your cards...</p>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 font-sans px-4">
+        <div className="mb-8">
+          <Loader />
+        </div>
+        <h2 className="text-2xl font-semibold text-slate-900 mb-2">
+          Crafting your personalized quiz
+        </h2>
+        <p className="text-slate-600 max-w-md text-center">
+          Analyzing your learning patterns to generate tailored questions — this should only take a moment.
+        </p>
       </div>
     );
   }
 
+  // --- RENDER: NO CARDS ---
+  if (!cards.length && !showResults) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 px-4">
+        <div className="bg-white border border-slate-100 shadow-sm rounded-2xl p-8 max-w-md text-center">
+          <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mb-4 mx-auto">
+            <Sparkles className="w-5 h-5 text-slate-400" />
+          </div>
+          <h3 className="text-lg font-medium text-slate-900 mb-2">
+            Quiz Not Available
+          </h3>
+          <p className="text-sm text-slate-600 mb-6">
+            No personalized quiz is available right now. Please check back later.
+          </p>
+          <Button
+            onClick={() => navigate("/learner/dashboard", { replace: true })}
+            className="w-full"
+          >
+            Return to Dashboard
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // --- RENDER: RESULTS PAGE ---
+  if (showResults) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex flex-col items-center py-8 px-4 overflow-x-hidden">
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center mb-12 z-10 relative max-w-2xl"
+        >
+          <h1
+            className="text-3xl md:text-4xl font-bold mb-3"
+            style={{ color: "hsl(var(--primary))", filter: "brightness(0.6)" }}
+          >
+            Your Comprehensive Profile
+          </h1>
+          <p className="text-slate-600">
+            We've analyzed your responses across 5 key dimensions to generate your unique learning DNA.
+          </p>
+        </motion.div>
+
+        {/* Desktop Hexagon Layout */}
+        <div className="hidden md:flex relative w-[600px] h-[600px] items-center justify-center my-8">
+          <svg className="absolute inset-0 w-full h-full text-slate-200" style={{ zIndex: 0 }}>
+            <circle cx="300" cy="300" r="180" fill="none" stroke="currentColor" strokeWidth="1" strokeDasharray="4 4" />
+            <circle cx="300" cy="300" r="80" fill="none" stroke="currentColor" strokeWidth="1" />
+          </svg>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.5 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="absolute z-20 w-32 h-32 bg-white rounded-full shadow-xl border-4 border-slate-100 flex items-center justify-center flex-col"
+          >
+            <span className="text-3xl">🎯</span>
+            <span className="text-xs font-bold text-slate-400 mt-1">YOU</span>
+          </motion.div>
+          {resultsSummary.map((item, index) => (
+            <HexItem key={item.category} data={item} index={index} total={5} />
+          ))}
+        </div>
+
+        {/* Mobile List Layout */}
+        <div className="md:hidden w-full max-w-sm flex flex-col gap-4 pb-12">
+          {resultsSummary.map((item, index) => (
+            <motion.div
+              key={item.category}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: index * 0.1 }}
+              className={`flex items-center gap-4 p-4 rounded-xl border shadow-sm ${categoryBgLight[item.category]}`}
+            >
+              <div className={`p-2.5 rounded-full ${categoryColors[item.category]}`}>
+                {item.icon}
+              </div>
+              <div>
+                <h3 className="text-xs font-bold uppercase opacity-70 mb-0.5">
+                  {item.title}
+                </h3>
+                <p className="text-sm font-semibold">{item.answer}</p>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.8 }}
+          className="relative z-50 md:-mt-12"
+        >
+          <Button
+            size="lg"
+            onClick={handleFinalSubmit}
+            disabled={submitting}
+            className="rounded-full px-8 py-6 text-lg shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all bg-[hsl(var(--primary)/0.9)] hover:bg-[hsl(var(--primary))] text-white"
+          >
+            {submitting ? (
+              <>
+                <Sparkles className="w-5 h-5 mr-2 animate-spin" />
+                Analyzing...
+              </>
+            ) : (
+              <>
+                Generate My Curriculum
+                <ArrowRight className="w-5 h-5 ml-2" />
+              </>
+            )}
+          </Button>
+        </motion.div>
+
+        {/* Stream Dialog */}
+        <Dialog open={showStreamDialog} onOpenChange={setShowStreamDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <div className="flex items-center gap-2">
+                <Loader className="w-5 h-5 animate-spin" />
+                <DialogTitle>Generating your curriculum</DialogTitle>
+              </div>
+              <DialogDescription>
+                Live logs from the recommendation engine
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-3 max-h-64 overflow-auto border rounded-md p-3 bg-muted/30">
+              {streamLogs.length === 0 && (
+                <div className="text-sm text-muted-foreground">Starting...</div>
+              )}
+              {streamLogs.map((msg, i) => (
+                <div key={i} className="flex items-center gap-2 text-sm">
+                  <Sparkles className="w-4 h-4 text-primary" />
+                  <span>{msg}</span>
+                </div>
+              ))}
+            </div>
+            <div className="flex items-center justify-between pt-2">
+              <div className="text-sm text-muted-foreground">
+                {streamStatus === "streaming" && "Streaming..."}
+                {streamStatus === "done" && "Completed"}
+                {streamStatus === "error" && "Failed"}
+              </div>
+              <Button
+                onClick={() => navigate("/learner/dashboard", { replace: true })}
+                disabled={streamStatus !== "done" || !streamResult}
+              >
+                Go to Dashboard
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
+    );
+  }
+
+  // --- RENDER: SWIPE CARDS ---
   const progress = ((currentCardIndex) / cards.length) * 100;
 
   return (
@@ -334,57 +564,28 @@ const SwipeQuizPage = () => {
         
         {/* HEADER */}
         <div className="flex-none pt-4 pb-2 z-20">
-            {!showDescriptionStep && (
-                <div className="flex flex-col gap-3">
-                    <div className="flex justify-between items-end px-1">
-                        <div>
-                            <h1 className="text-3xl font-black text-slate-800 tracking-tight">Discover You</h1>
-                            <p className="text-slate-500 text-sm font-medium">Batch {batchesCompleted + 1} of 4</p>
-                        </div>
-                    </div>
-                    <div className="w-full h-1 bg-slate-200 rounded-full overflow-hidden">
-                        <motion.div 
-                            className="h-full bg-indigo-600"
-                            initial={{ width: 0 }}
-                            animate={{ width: `${progress}%` }}
-                            transition={{ ease: "easeOut" }}
-                        />
+            <div className="flex flex-col gap-3">
+                <div className="flex justify-between items-end px-1">
+                    <div>
+                        <h1 className="text-3xl font-black text-slate-800 tracking-tight">Discover You</h1>
+                        <p className="text-slate-500 text-sm font-medium">Batch {batchesCompleted + 1} of 4</p>
                     </div>
                 </div>
-            )}
+                <div className="w-full h-1 bg-slate-200 rounded-full overflow-hidden">
+                    <motion.div 
+                        className="h-full bg-indigo-600"
+                        initial={{ width: 0 }}
+                        animate={{ width: `${progress}%` }}
+                        transition={{ ease: "easeOut" }}
+                    />
+                </div>
+            </div>
         </div>
 
         {/* MAIN AREA */}
         <div className="flex-1 relative flex items-center justify-center my-4">
             
-            {showDescriptionStep ? (
-                <motion.div 
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="w-full bg-white rounded-3xl shadow-xl p-8 border border-slate-100 flex flex-col z-30"
-                >
-                     <div className="w-12 h-12 bg-indigo-50 rounded-2xl flex items-center justify-center mb-6 text-indigo-600">
-                        <Sparkles className="w-6 h-6" />
-                    </div>
-                    <h2 className="text-2xl font-bold text-slate-900 mb-2">Final Step</h2>
-                    <p className="text-slate-500 mb-6">Describe your ideal career path or interests to generate your curriculum.</p>
-                    <Textarea
-                        placeholder="I want to learn..."
-                        value={description}
-                        onChange={(e) => setDescription(e.target.value)}
-                        className="flex-1 min-h-[120px] bg-slate-50 border-slate-200 rounded-xl p-4 mb-6"
-                    />
-                    <Button 
-                        size="lg"
-                        className="w-full rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold h-14"
-                        onClick={handleFinalSubmit}
-                        disabled={submitting || !description.trim()}
-                    >
-                        {submitting ? "Starting..." : "Generate Curriculum"}
-                    </Button>
-                </motion.div>
-            ) : (
-                <div className="relative w-full h-full max-h-[500px]">
+            <div className="relative w-full h-full max-h-[500px]">
                     {/* Background Icons */}
                     <div className="absolute inset-0 flex items-center justify-between pointer-events-none z-0 px-4">
                          <motion.div style={{ scale: trashScale, color: trashColor, opacity: trashOpacity }} className="flex flex-col items-center justify-center">
@@ -429,82 +630,43 @@ const SwipeQuizPage = () => {
                             );
                         })}
                     </AnimatePresence>
-                </div>
-            )}
+            </div>
         </div>
 
         {/* FOOTER BUTTONS */}
-        {!showDescriptionStep && (
-            <div className="flex-none pb-6 pt-2 flex justify-center items-center gap-8 z-20">
-                <Button
-                    variant="outline"
-                    className="w-14 h-14 rounded-full border-2 border-rose-100 bg-white text-rose-500 hover:bg-rose-50 hover:border-rose-200 shadow-sm transition-transform active:scale-95"
-                    onClick={() => handleRate(currentCardIndex, "dislike")}
-                    disabled={currentCardIndex >= cards.length}
-                >
-                    <Trash2 className="w-6 h-6" />
-                </Button>
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    className="w-10 h-10 rounded-full bg-slate-100 text-slate-400 hover:bg-slate-200 hover:text-slate-600"
-                    onClick={() => {
-                        if (currentCardIndex > 0) {
-                            setCurrentCardIndex(i => i - 1);
-                            x.set(0); 
-                            controls.set({ x: 0, scale: 1, opacity: 1, rotate: 0 });
-                        }
-                    }}
-                    disabled={currentCardIndex === 0}
-                >
-                    <RotateCcw className="w-5 h-5" />
-                </Button>
-                <Button
-                    variant="outline"
-                    className="w-14 h-14 rounded-full border-2 border-emerald-100 bg-white text-emerald-500 hover:bg-emerald-50 hover:border-emerald-200 shadow-sm transition-transform active:scale-95"
-                    onClick={() => handleRate(currentCardIndex, "like")}
-                    disabled={currentCardIndex >= cards.length}
-                >
-                    <CheckCircle2 className="w-7 h-7" />
-                </Button>
-            </div>
-        )}
-
-        {/* STREAMING DIALOG */}
-        <Dialog open={showStreamDialog} onOpenChange={setShowStreamDialog}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <div className="flex items-center gap-2">
-                 <Loader className="w-5 h-5 animate-spin text-indigo-600" />
-                 <DialogTitle>Generating Curriculum</DialogTitle>
-              </div>
-              <DialogDescription>
-                AI is analyzing your preferences to build a custom path.
-              </DialogDescription>
-            </DialogHeader>
-            
-            <div className="space-y-2 max-h-64 overflow-y-auto border rounded-md p-4 bg-slate-900 text-slate-300 font-mono text-xs">
-              {streamLogs.length === 0 && (
-                <div className="animate-pulse">Initializing AI engine...</div>
-              )}
-              {streamLogs.map((msg, i) => (
-                <div key={i} className="flex items-start gap-2">
-                  <span className="text-indigo-400 mt-0.5">{">"}</span>
-                  <span>{msg}</span>
-                </div>
-              ))}
-              <div ref={(el) => el?.scrollIntoView({ behavior: 'smooth' })} />
-            </div>
-
-            <div className="flex items-center justify-between pt-2">
-              <div className="text-xs text-slate-500">
-                {streamStatus === "streaming" && "Processing..."}
-                {streamStatus === "done" && "Complete! Redirecting..."}
-                {streamStatus === "error" && "Error occurred."}
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
+        <div className="flex-none pb-6 pt-2 flex justify-center items-center gap-8 z-20">
+            <Button
+                variant="outline"
+                className="w-14 h-14 rounded-full border-2 border-rose-100 bg-white text-rose-500 hover:bg-rose-50 hover:border-rose-200 shadow-sm transition-transform active:scale-95"
+                onClick={() => handleRate(currentCardIndex, "dislike")}
+                disabled={currentCardIndex >= cards.length}
+            >
+                <Trash2 className="w-6 h-6" />
+            </Button>
+            <Button
+                variant="ghost"
+                size="icon"
+                className="w-10 h-10 rounded-full bg-slate-100 text-slate-400 hover:bg-slate-200 hover:text-slate-600"
+                onClick={() => {
+                    if (currentCardIndex > 0) {
+                        setCurrentCardIndex(i => i - 1);
+                        x.set(0); 
+                        controls.set({ x: 0, scale: 1, opacity: 1, rotate: 0 });
+                    }
+                }}
+                disabled={currentCardIndex === 0}
+            >
+                <RotateCcw className="w-5 h-5" />
+            </Button>
+            <Button
+                variant="outline"
+                className="w-14 h-14 rounded-full border-2 border-emerald-100 bg-white text-emerald-500 hover:bg-emerald-50 hover:border-emerald-200 shadow-sm transition-transform active:scale-95"
+                onClick={() => handleRate(currentCardIndex, "like")}
+                disabled={currentCardIndex >= cards.length}
+            >
+                <CheckCircle2 className="w-7 h-7" />
+            </Button>
+        </div>
 
       </div>
     </div>
