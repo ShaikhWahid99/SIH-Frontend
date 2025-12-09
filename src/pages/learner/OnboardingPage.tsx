@@ -46,12 +46,12 @@ const OnboardingPage = () => {
       if (raw) {
         const parsed = JSON.parse(raw);
         return {
-            ageRange: parsed.ageRange || "",
-            qualification: parsed.qualification || "",
-            stream: parsed.stream || "",
-            status: parsed.status || "",
-            selectedSkills: parsed.selectedSkills || [],
-            interests: parsed.interests || []
+          ageRange: parsed.ageRange || "",
+          qualification: parsed.qualification || "",
+          stream: parsed.stream || "",
+          status: parsed.status || "",
+          selectedSkills: parsed.selectedSkills || [],
+          interests: parsed.interests || [],
         };
       }
       return initialForm;
@@ -106,6 +106,10 @@ const OnboardingPage = () => {
       },
       skills: data.selectedSkills,
       interestSectors: data.interests,
+      preferredLanguage: "English",
+      state: "Not Provided",
+      district: "Not Provided",
+      careerGoal: "Not Provided",
     };
   };
 
@@ -119,7 +123,8 @@ const OnboardingPage = () => {
     ) {
       toast({
         title: "Missing Information",
-        description: "Please fill in all fields and select at least one skill or interest.",
+        description:
+          "Please fill in all fields and select at least one skill or interest.",
         variant: "destructive",
       });
       return;
@@ -128,7 +133,6 @@ const OnboardingPage = () => {
     setSaving(true);
     try {
       const payload = buildPayloadForApi(formData);
-      // This call now triggers the external API in the backend
       await api.postMe(payload);
 
       try {
@@ -149,7 +153,8 @@ const OnboardingPage = () => {
       console.error("Onboarding submit error", err);
       toast({
         title: "Save failed",
-        description: err?.payload?.message || err?.message || "Could not save profile.",
+        description:
+          err?.payload?.message || err?.message || "Could not save profile.",
         variant: "destructive",
       });
     } finally {
@@ -160,6 +165,8 @@ const OnboardingPage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 py-10 px-4">
       <div className="max-w-3xl mx-auto">
+        
+        {/* Heading + Demo Button */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-gray-900 mb-2">
             Build Your Learning Profile
@@ -167,10 +174,43 @@ const OnboardingPage = () => {
           <p className="text-gray-500">
             Complete your profile to get personalized recommendations
           </p>
+
+          {/* Demo Autofill Button */}
+         <Button
+  className="mt-4 bg-gray-200 text-gray-800 hover:bg-gray-300"
+  onClick={() => {
+    const demo = {
+      ageRange: "18-25",
+      status: "Student",
+      qualification: qualifications[1] || "",
+      stream: streams[0] || "",
+      selectedSkills: [
+        skills[4], // index → actual skill string
+        skills[9],
+        skills[13]
+      ],
+      interests: [
+        sectors[7] // index → actual sector string
+      ],
+    };
+
+    setFormData(demo);
+    persist(demo);
+
+    toast({
+      title: "Demo Inputs Applied",
+      description: "Basic fields have been auto-filled.",
+    });
+  }}
+>
+  Auto-Fill Demo Inputs
+</Button>
+
         </div>
 
         <Card className="p-8 shadow-xl border-t-4 border-t-blue-500">
           <div className="space-y-8">
+            
             <div className="grid md:grid-cols-2 gap-6">
               <div>
                 <Label className="text-sm font-semibold text-gray-700 mb-2 block">
@@ -201,7 +241,9 @@ const OnboardingPage = () => {
                 >
                   <option value="">Select Status</option>
                   <option value="Student">Student</option>
-                  <option value="Working Professional">Working Professional</option>
+                  <option value="Working Professional">
+                    Working Professional
+                  </option>
                   <option value="Job Seeker">Job Seeker</option>
                   <option value="Freelancer">Freelancer</option>
                 </select>
@@ -261,12 +303,16 @@ const OnboardingPage = () => {
                         ? "bg-blue-50 border-blue-200"
                         : "bg-white border-gray-200 hover:border-blue-300"
                     }`}
-                    onClick={() => toggleSkill(skill, !formData.selectedSkills.includes(skill))}
+                    onClick={() =>
+                      toggleSkill(skill, !formData.selectedSkills.includes(skill))
+                    }
                   >
                     <Checkbox
                       id={`skill-${skill}`}
                       checked={formData.selectedSkills.includes(skill)}
-                      onCheckedChange={(val) => toggleSkill(skill, Boolean(val))}
+                      onCheckedChange={(val) =>
+                        toggleSkill(skill, Boolean(val))
+                      }
                       className="data-[state=checked]:bg-blue-600"
                     />
                     <label
@@ -294,12 +340,19 @@ const OnboardingPage = () => {
                         ? "bg-purple-50 border-purple-200"
                         : "bg-white border-gray-200 hover:border-purple-300"
                     }`}
-                    onClick={() => toggleInterest(sector, !formData.interests.includes(sector))}
+                    onClick={() =>
+                      toggleInterest(
+                        sector,
+                        !formData.interests.includes(sector)
+                      )
+                    }
                   >
                     <Checkbox
                       id={`sector-${sector}`}
                       checked={formData.interests.includes(sector)}
-                      onCheckedChange={(val) => toggleInterest(sector, Boolean(val))}
+                      onCheckedChange={(val) =>
+                        toggleInterest(sector, Boolean(val))
+                      }
                       className="data-[state=checked]:bg-purple-600"
                     />
                     <label
@@ -315,7 +368,7 @@ const OnboardingPage = () => {
             </div>
 
             <div className="pt-6">
-              <Button 
+              <Button
                 className="w-full h-12 text-lg bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg transition-all hover:scale-[1.01]"
                 onClick={handleSubmit}
                 disabled={saving}
@@ -325,7 +378,9 @@ const OnboardingPage = () => {
                     <Sparkles className="w-5 h-5 animate-spin" />
                     Generating your quiz...
                   </div>
-                ) : "Complete Profile"}
+                ) : (
+                  "Complete Profile"
+                )}
               </Button>
             </div>
 
