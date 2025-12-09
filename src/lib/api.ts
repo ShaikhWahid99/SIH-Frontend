@@ -12,9 +12,6 @@ import {
   clearTrainerTokens,
 } from "./auth";
 
-
-
-
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:5000";
 
 // external LLM quiz service (Python API)
@@ -150,7 +147,6 @@ async function refreshSession() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ refreshToken }),
-      // headers: { "Content-Type": "application/json" },
     });
 
     const data = await res.json();
@@ -329,7 +325,7 @@ export const api = {
       body: JSON.stringify(body),
     }),
 
-     clearProfile: () =>
+  clearProfile: () =>
     request("/api/me", {
       method: "DELETE",
     }),
@@ -376,17 +372,21 @@ export const api = {
   startGoogle: () => `${API_BASE}/auth/google`,
 
   // ─────────── recommendations (Neo4j) ───────────
+  
+  // ✅ NEW: Fetch all qualifications from Neo4j
+  getQualifications: () => request<any[]>("/api/qualifications"),
+
   getRecommendations: () => request<{ items: any[] }>("/api/recommendations"),
 
   // Get single pathway details
   getPathwayById: (id: string) => request<any>(`/api/pathways/${id}`),
 
-  // NEW: Get Graph Data
+  // Get Graph Data
   getPathwayGraph: (id: string) => request<{ nodes: any[]; links: any[] }>(`/api/pathways/${id}/graph`),
 
-  getCourseById: (id: string) => request<any>(`/api/courses/${id}`), 
+  getCourseById: (id: string) => request<any>(`/api/courses/${id}`),
 
-  // ✅ NEW: Skill India Recommendations 
+  // Skill India Recommendations 
   getSkillIndiaCourses: (id: string) => request<any[]>(`/api/recommendations/skill-india/${id}`),
 
   searchVideos: (query: string) => request<YouTubeVideo[]>(`/api/videos/search?q=${encodeURIComponent(query)}`),
@@ -400,4 +400,6 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ query, thread_id: threadId }),
     }),
+
+  
 };

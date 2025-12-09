@@ -71,7 +71,7 @@ const PathwayDetailPage = () => {
 
   const [pathway, setPathway] = useState<Pathway | null>(null);
   // ✅ Merged state for view toggle
-  const [viewMode, setViewMode] = useState<'graph' | 'list'>('graph');
+  const [viewMode, setViewMode] = useState<'graph' | 'list'>('list');
 
   // ✅ Merged state for data
   const [graphData, setGraphData] = useState<MindmapNode | null>(null);
@@ -246,6 +246,14 @@ const PathwayDetailPage = () => {
 
             {/* ✅ VIEW TOGGLE BUTTONS */}
             <div className="bg-muted p-1 rounded-lg flex gap-1">
+                <Button
+                 variant={viewMode === 'list' ? 'secondary' : 'ghost'}
+                 size="sm"
+                 onClick={() => setViewMode('list')}
+                 className="gap-2"
+               >
+                 <List className="w-4 h-4" /> List
+               </Button>
                <Button
                  variant={viewMode === 'graph' ? 'secondary' : 'ghost'}
                  size="sm"
@@ -254,14 +262,7 @@ const PathwayDetailPage = () => {
                >
                  <GitGraph className="w-4 h-4" /> Graph
                </Button>
-               <Button
-                 variant={viewMode === 'list' ? 'secondary' : 'ghost'}
-                 size="sm"
-                 onClick={() => setViewMode('list')}
-                 className="gap-2"
-               >
-                 <List className="w-4 h-4" /> List
-               </Button>
+
             </div>
           </div>
 
