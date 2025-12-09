@@ -173,7 +173,6 @@ const ProfilePage = () => {
 
         {!isEditing ? (
           <div className="flex gap-2">
-            <Button onClick={() => setIsEditing(true)}>{uiText.editBtn}</Button>
             <AlertDialog
               open={showClearConfirm}
               onOpenChange={setShowClearConfirm}

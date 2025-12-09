@@ -14,14 +14,12 @@ import { useState } from 'react';
 const navItems = [
   { icon: Home, label: 'Dashboard', path: '/learner/dashboard' },
   { icon: BookOpen, label: 'Pathways', path: '/learner/pathways' },
-  { icon: TrendingUp, label: 'Progress', path: '/learner/progress' },
   { icon: Layers, label: 'Alternate Pathways', path: '/learner/alternate-pathways' },
   // ✅ NEW ITEM ADDED HERE (Skill India Library)
   { 
     icon: Sparkles, 
     label: 'Skill India Library', 
     path: '/learner/skill-india',
-    className: 'text-orange-600 hover:text-orange-700 hover:bg-orange-50' 
   },
   { icon: User, label: 'Profile', path: '/learner/profile' },
   { icon: MessageSquare, label: 'Feedback', path: '/learner/feedback' },
