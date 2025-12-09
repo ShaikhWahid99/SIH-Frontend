@@ -51,7 +51,7 @@ const ProfilePage = () => {
     status: "Current Status",
     skills: "Skills",
     interests: "Interests",
-    goals: "Career Goals",
+    // goals: "Career Goals", <--- REMOVED
   };
 
   const [uiText, setUiText] = useState(originalText);
@@ -95,7 +95,7 @@ const ProfilePage = () => {
     stream: "",
     experience: "",
     interests: "",
-    goals: "",
+    // goals: "", <--- REMOVED
     skills: "",
   });
 
@@ -113,7 +113,7 @@ const ProfilePage = () => {
       interests: Array.isArray(details?.interestSectors)
         ? details.interestSectors.join(", ")
         : "",
-      goals: details?.careerGoal || "",
+      // goals: details?.careerGoal || "", <--- REMOVED
       skills: Array.isArray(details?.skills) ? details.skills.join(", ") : "",
     });
   }, [user]);
@@ -284,7 +284,7 @@ const ProfilePage = () => {
                 value={profile.interests}
                 readOnly
               />
-              <TextInput label={uiText.goals} value={profile.goals} readOnly />
+              {/* <TextInput label={uiText.goals} value={profile.goals} readOnly /> <--- REMOVED */}
             </div>
           </div>
         </CardContent>

@@ -176,35 +176,37 @@ const OnboardingPage = () => {
           </p>
 
           {/* Demo Autofill Button */}
-         <Button
-  className="mt-4 bg-gray-200 text-gray-800 hover:bg-gray-300"
-  onClick={() => {
-    const demo = {
-      ageRange: "18-25",
-      status: "Student",
-      qualification: qualifications[1] || "",
-      stream: streams[0] || "",
-      selectedSkills: [
-        skills[4], // index → actual skill string
-        skills[9],
-        skills[13]
-      ],
-      interests: [
-        sectors[7] // index → actual sector string
-      ],
-    };
+       <div className="absolute top-0 right-0 p-4">
+  <Button
+    className="bg-gray-200 text-gray-800 hover:bg-gray-300"
+    onClick={() => {
+      const demo = {
+        ageRange: "18-25",
+        status: "Student",
+        qualification: qualifications[1] || "",
+        stream: streams[0] || "",
+        selectedSkills: [
+          skills[4], // index → actual skill string
+          skills[9],
+          skills[13],
+        ],
+        interests: [
+          sectors[7], // index → actual sector string
+        ],
+      };
 
-    setFormData(demo);
-    persist(demo);
+      setFormData(demo);
+      persist(demo);
 
-    toast({
-      title: "Demo Inputs Applied",
-      description: "Basic fields have been auto-filled.",
-    });
-  }}
->
-  Auto-Fill Demo Inputs
-</Button>
+      toast({
+        title: "Demo Inputs Applied",
+        description: "Basic fields have been auto-filled.",
+      });
+    }}
+  >
+    Auto-Fill Demo Inputs
+  </Button>
+</div>
 
         </div>
 
