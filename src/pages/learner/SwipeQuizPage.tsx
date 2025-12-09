@@ -32,6 +32,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import Loader from "@/components/Loader";
+import { Textarea } from "@/components/ui/textarea";
 
 type Rating = "like" | "dislike" | null;
 
@@ -117,6 +118,8 @@ const SwipeQuizPage = () => {
     "idle" | "streaming" | "done" | "error"
   >("idle");
   const [streamResult, setStreamResult] = useState<any>(null);
+  const [showDescribeDialog, setShowDescribeDialog] = useState(false);
+  const [selfDescription, setSelfDescription] = useState("");
 
   // --- ANIMATION CONTROLS ---
   const controls = useAnimation();
@@ -368,7 +371,8 @@ const SwipeQuizPage = () => {
 
   // --- LOGIC: SUBMIT FINAL ---
   const finalizeQuiz = async (
-    answers: { question: string; answer: string }[]
+    answers: { question: string; answer: string }[],
+    description?: string
   ) => {
     setSubmitting(true);
     try {
@@ -382,6 +386,7 @@ const SwipeQuizPage = () => {
       // Save quiz data
       await api.saveDynamicQuiz({
         dynamicQuizAnswers: answers,
+        dynamicQuizSelfDescription: description,
         dynamicQuizCompleted: true,
         dynamicQuizCompletedAt: new Date().toISOString(),
       });
@@ -516,11 +521,39 @@ const SwipeQuizPage = () => {
 
   const handleFinalSubmit = async () => {
     const likes = Array.from(new Set([...savedLikes, ...liked]));
+    if (likes.length < 4) {
+      setShowDescribeDialog(true);
+      return;
+    }
     const dynamicQuizAnswers = likes.map((text) => ({
       question: text,
       answer: "like",
     }));
     await finalizeQuiz(dynamicQuizAnswers);
+  };
+
+  const handleSubmitDescription = async () => {
+    const likes = Array.from(new Set([...savedLikes, ...liked]));
+    const desc = selfDescription.trim();
+    if (likes.length >= 4) {
+      setShowDescribeDialog(false);
+    }
+    if (likes.length < 4) {
+      if (desc.length < 100) {
+        toast({
+          title: "Add more details",
+          description: "Please enter at least 100 characters.",
+          variant: "destructive",
+        });
+        return;
+      }
+      const dynamicQuizAnswers = likes.map((text) => ({
+        question: text,
+        answer: "like",
+      }));
+      setShowDescribeDialog(false);
+      await finalizeQuiz(dynamicQuizAnswers, desc);
+    }
   };
 
   useEffect(() => {
@@ -1010,6 +1043,30 @@ const SwipeQuizPage = () => {
             >
               Go to Dashboard
             </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showDescribeDialog} onOpenChange={setShowDescribeDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Tell us about yourself</DialogTitle>
+            <DialogDescription>
+              You agreed to fewer than 4 statements. Please describe yourself in at least 100 characters.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Textarea
+              value={selfDescription}
+              onChange={(e) => setSelfDescription(e.target.value)}
+              minLength={100}
+              placeholder="Describe your interests, goals, and background..."
+            />
+            <div className="text-xs text-slate-500">{selfDescription.trim().length} / 100</div>
+          </div>
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="ghost" onClick={() => setShowDescribeDialog(false)}>Cancel</Button>
+            <Button onClick={handleSubmitDescription} disabled={selfDescription.trim().length < 100}>Continue</Button>
           </div>
         </DialogContent>
       </Dialog>
