@@ -65,7 +65,7 @@ export const LearnerSidebar = () => {
             const isActive = location.pathname === item.path;
             
             // ✅ Logic to handle custom colors (like for Skill India)
-            const customClass = item.className || 'text-muted-foreground hover:bg-muted hover:text-foreground';
+            const customClass = 'text-muted-foreground hover:bg-muted hover:text-foreground';
             const activeClass = 'bg-primary text-primary-foreground shadow-lg';
 
             return (
