@@ -106,10 +106,6 @@ const OnboardingPage = () => {
       },
       skills: data.selectedSkills,
       interestSectors: data.interests,
-      preferredLanguage: "English",
-      state: "Not Provided",
-      district: "Not Provided",
-      careerGoal: "Not Provided"
     };
   };
 

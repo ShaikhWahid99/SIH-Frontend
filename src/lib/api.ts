@@ -329,6 +329,11 @@ export const api = {
       body: JSON.stringify(body),
     }),
 
+     clearProfile: () =>
+    request("/api/me", {
+      method: "DELETE",
+    }),
+
   // ─────────── trainer auth ───────────
   trainerLogin: (body: any) =>
     trainerRequest("/trainer/login", {

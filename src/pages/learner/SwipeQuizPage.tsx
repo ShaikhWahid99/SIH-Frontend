@@ -56,6 +56,7 @@ const SwipeQuizPage = () => {
   const [isDoneHint, setIsDoneHint] = useState<boolean>(false);
   const [currentCardIndex, setCurrentCardIndex] = useState<number>(0);
   const [savedLikes, setSavedLikes] = useState<string[]>([]);
+  const [initialLoad, setInitialLoad] = useState<boolean>(true);
   
   // --- RESULTS STATE ---
   const [showResults, setShowResults] = useState(false);
@@ -112,7 +113,7 @@ const SwipeQuizPage = () => {
 
     return categories.map((category) => {
       const entry = quizResponses?.find((r) => r.category === category);
-      const answer = entry?.answer || "Not answered";
+      // const answer = entry?.answer || "Not answered";
 
       let icon: any = <Sparkles className="w-5 h-5" />;
       let title = "Insight";
@@ -130,7 +131,7 @@ const SwipeQuizPage = () => {
         title = "Study Routine";
       }
 
-      return { category, title, answer, icon };
+      return { category, title, icon };
     });
   }, []);
 
@@ -179,7 +180,7 @@ const SwipeQuizPage = () => {
       navigate("/auth/login", { replace: true });
       return;
     }
-    setLoading(true);
+    setLoading(stage === "START");
     try {
       const body: SwipeRequest = {
         user_id: String(uid),
@@ -200,6 +201,7 @@ const SwipeQuizPage = () => {
       toast({ title: "Error", description: "Could not load quiz cards.", variant: "destructive" });
     } finally {
       setLoading(false);
+      if (stage === "START") setInitialLoad(false);
     }
   };
 
@@ -381,7 +383,7 @@ const SwipeQuizPage = () => {
   }, [ratings, currentCardIndex]);
 
   // --- RENDER: LOADING ---
-  if (loading && !showResults) {
+  if (loading && !showResults && initialLoad) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 font-sans px-4">
         <div className="mb-8">
@@ -478,7 +480,7 @@ const SwipeQuizPage = () => {
                 <h3 className="text-xs font-bold uppercase opacity-70 mb-0.5">
                   {item.title}
                 </h3>
-                <p className="text-sm font-semibold">{item.answer}</p>
+                {/* <p className="text-sm font-semibold">{item.answer}</p> */}
               </div>
             </motion.div>
           ))}
