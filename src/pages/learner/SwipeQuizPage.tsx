@@ -12,6 +12,7 @@ import {
   Brain,
   Clock,
   ArrowRight,
+  X as XIcon,
 } from "lucide-react";
 import { api, SwipeRequest, SwipeStage } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
@@ -36,6 +37,36 @@ type Rating = "like" | "dislike" | null;
 
 const STAGES: SwipeStage[] = ["START", "BATCH_1", "BATCH_2", "BATCH_3", "BATCH_4"];
 
+// -----------------------------
+// Motivational Messages (20)
+// -----------------------------
+const MOTIVATION: string[] = [
+  "Great job! You're one step closer to mastering your future!",
+  "Small steps today lead to big wins tomorrow!",
+  "Amazing! Your journey just leveled up!",
+  "Keep going! Success is built one milestone at a time!",
+  "You’re doing awesome — stay unstoppable!",
+  "This momentum is fire! Keep pushing!",
+  "Your dedication is shaping your future!",
+  "Every milestone completed is progress earned!",
+  "Believe in yourself — you’re on the right track!",
+  "Great progress! Your skills are growing with every step!",
+  "This is how achievers rise. Keep going!",
+  "You're building something incredible — stay focused!",
+  "Milestone unlocked! The journey continues!",
+  "Your hard work is paying off — don’t stop now!",
+  "You're closer to your goals than you think!",
+  "Each step forward is a victory. Well done!",
+  "Your potential is limitless — keep moving!",
+  "Progress looks good on you!",
+  "You're crushing it — keep the energy alive!",
+  "Milestone complete! Time to shine even brighter!",
+];
+
+const TIMELINE_TOTAL = 10;
+// milestone thresholds (global answered counts after which to fire toast)
+const MILESTONE_THRESHOLDS = [3, 6, 8, 10]; // matches batches: 3,3,2,2
+
 const SwipeQuizPage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -56,8 +87,14 @@ const SwipeQuizPage = () => {
   const [isDoneHint, setIsDoneHint] = useState<boolean>(false);
   const [currentCardIndex, setCurrentCardIndex] = useState<number>(0);
   const [savedLikes, setSavedLikes] = useState<string[]>([]);
-  const [initialLoad, setInitialLoad] = useState<boolean>(true);
-  
+
+  // --- GLOBAL TIMELINE STATE ---
+  // stores the user's answer for each of the 10 timeline slots in order
+  const [globalRatings, setGlobalRatings] = useState<Rating[]>(
+    () => Array(TIMELINE_TOTAL).fill(null)
+  );
+  const [answeredCount, setAnsweredCount] = useState<number>(0); // how many questions answered globally
+
   // --- RESULTS STATE ---
   const [showResults, setShowResults] = useState(false);
 
@@ -72,7 +109,7 @@ const SwipeQuizPage = () => {
   const x = useMotionValue(0);
   const rotate = useTransform(x, [-200, 200], [-25, 25]); 
   
-  // Background Icon Animations
+  // Background Icon Animations (for left/right drag)
   const trashScale = useTransform(x, [-150, 0], [1.2, 1]);
   const trashColor = useTransform(x, [-150, -50], ["#f43f5e", "#cbd5e1"]);
   const trashOpacity = useTransform(x, [-150, -20], [1, 0.5]);
@@ -80,6 +117,10 @@ const SwipeQuizPage = () => {
   const checkScale = useTransform(x, [0, 150], [1, 1.2]);
   const checkColor = useTransform(x, [50, 150], ["#cbd5e1", "#10b981"]);
   const checkOpacity = useTransform(x, [20, 150], [0.5, 1]);
+
+  // Swipe overlay icon opacities (show while dragging)
+  const rightOpacity = useTransform(x, [20, 150], [0, 1]);
+  const leftOpacity = useTransform(x, [-150, -20], [1, 0]);
 
   const allRated = useMemo(() => cards.length > 0 && ratings.every((r) => r !== null), [cards, ratings]);
 
@@ -113,7 +154,7 @@ const SwipeQuizPage = () => {
 
     return categories.map((category) => {
       const entry = quizResponses?.find((r) => r.category === category);
-      // const answer = entry?.answer || "Not answered";
+      const answer = entry?.answer || "Not answered";
 
       let icon: any = <Sparkles className="w-5 h-5" />;
       let title = "Insight";
@@ -131,7 +172,7 @@ const SwipeQuizPage = () => {
         title = "Study Routine";
       }
 
-      return { category, title, icon };
+      return { category, title, answer, icon };
     });
   }, []);
 
@@ -164,6 +205,7 @@ const SwipeQuizPage = () => {
   };
 
   useEffect(() => {
+    // load first batch
     loadBatch("START", [], []);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -180,7 +222,7 @@ const SwipeQuizPage = () => {
       navigate("/auth/login", { replace: true });
       return;
     }
-    setLoading(stage === "START");
+    setLoading(true);
     try {
       const body: SwipeRequest = {
         user_id: String(uid),
@@ -201,7 +243,6 @@ const SwipeQuizPage = () => {
       toast({ title: "Error", description: "Could not load quiz cards.", variant: "destructive" });
     } finally {
       setLoading(false);
-      if (stage === "START") setInitialLoad(false);
     }
   };
 
@@ -302,7 +343,7 @@ const SwipeQuizPage = () => {
 
   // --- LOGIC: CARD INTERACTIONS ---
   const handleRate = async (index: number, value: Exclude<Rating, null>) => {
-    // Animation for button clicks
+    // Animation for button clicks / snap away
     if (x.get() === 0) {
         await controls.start({
             x: value === "like" ? 200 : -200,
@@ -314,25 +355,62 @@ const SwipeQuizPage = () => {
         });
     }
 
+    // If this index was previously unanswered, increment global answered count and set globalRatings
     setRatings((prev) => {
       const next = [...prev];
       next[index] = value;
       return next;
     });
 
+    // Update globalRatings in order (append at current answeredCount position)
+    setGlobalRatings((prevGlobal) => {
+      const nextGlobal = [...prevGlobal];
+      // find first null slot (we assume sequential answering)
+      const slot = nextGlobal.findIndex((r) => r === null);
+      const useSlot = slot === -1 ? nextGlobal.length : slot;
+      if (useSlot < TIMELINE_TOTAL) {
+        nextGlobal[useSlot] = value;
+      }
+      return nextGlobal;
+    });
+
+    // increment answeredCount if we filled a previously empty slot
+    setAnsweredCount((prev) => {
+      const newCount = prev < TIMELINE_TOTAL ? prev + 1 : prev;
+      // check milestone thresholds and toast if matches
+      if (MILESTONE_THRESHOLDS.includes(newCount)) {
+        const milestoneIndex = MILESTONE_THRESHOLDS.indexOf(newCount) + 1; // 1..4
+        const msg = MOTIVATION[Math.floor(Math.random() * MOTIVATION.length)];
+        toast({
+          title: `Milestone ${milestoneIndex} Completed!`,
+          description: msg,
+        });
+      }
+      return newCount;
+    });
+
+    // save likes immediately if liked
     const text = cards[index];
     if (value === "like" && text && !savedLikes.includes(text)) {
       setSavedLikes((s) => [...s, text]);
       api.saveDynamicQuiz({ dynamicQuizAnswers: [{ question: text, answer: "like" }] }).catch(() => {});
     }
     
+    // move to next card after a tiny delay
     setTimeout(() => {
         if (index < cards.length - 1) {
             setCurrentCardIndex(index + 1);
             x.set(0);
             controls.set({ x: 0, y: 0, scale: 1, rotate: 0, opacity: 1 });
+        } else {
+            // if this batch finished, trigger goNext logic which will load next batch
+            // note: goNext checks allRated; ratings updated above so allRated may become true
+            // small timeout to allow ratings state to update then call goNext
+            setTimeout(() => {
+              if (allRated) goNext();
+            }, 150);
         }
-    }, 100); 
+    }, 120); 
   };
 
   const onDragEnd = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
@@ -347,6 +425,7 @@ const SwipeQuizPage = () => {
   };
 
   const goNext = async () => {
+    // only proceed when the current batch's cards have been rated
     if (!allRated || submitting) return;
     const likedBatch = cards.filter((_, i) => ratings[i] === "like");
     const nextLiked = [...liked, ...likedBatch];
@@ -383,7 +462,7 @@ const SwipeQuizPage = () => {
   }, [ratings, currentCardIndex]);
 
   // --- RENDER: LOADING ---
-  if (loading && !showResults && initialLoad) {
+  if (loading && !showResults) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 font-sans px-4">
         <div className="mb-8">
@@ -480,7 +559,7 @@ const SwipeQuizPage = () => {
                 <h3 className="text-xs font-bold uppercase opacity-70 mb-0.5">
                   {item.title}
                 </h3>
-                {/* <p className="text-sm font-semibold">{item.answer}</p> */}
+                <p className="text-sm font-semibold">{item.answer}</p>
               </div>
             </motion.div>
           ))}
@@ -554,8 +633,8 @@ const SwipeQuizPage = () => {
     );
   }
 
-  // --- RENDER: SWIPE CARDS ---
-  const progress = ((currentCardIndex) / cards.length) * 100;
+  // --- RENDER: SWIPE CARDS WITH TIMELINE ---
+  const progress = ((currentCardIndex) / Math.max(cards.length, 1)) * 100;
 
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col items-center overflow-hidden relative font-sans text-slate-900">
@@ -563,9 +642,41 @@ const SwipeQuizPage = () => {
       <div className="absolute top-0 inset-x-0 h-96 bg-gradient-to-b from-indigo-50 to-slate-100 pointer-events-none" />
 
       <div className="relative z-10 w-full max-w-md h-[100dvh] flex flex-col p-4">
-        
+
+        {/* ---------- GLOBAL 10-Q TIMELINE ---------- */}
+        <div className="mb-4">
+          <h2 className="text-lg font-semibold text-slate-800 mb-2 text-center">Quiz Timeline</h2>
+          <div className="flex items-center justify-between gap-2 px-1">
+            {Array.from({ length: TIMELINE_TOTAL }).map((_, i) => {
+              const r = globalRatings[i];
+              const idx = i + 1;
+              const isAnswered = r !== null;
+              const bg = r === "like" ? "bg-emerald-500" : r === "dislike" ? "bg-rose-500" : "bg-white";
+              const border = r ? "" : "border border-slate-200";
+              return (
+                <div key={i} className="flex-1">
+                  <div className="flex flex-col items-center">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${bg} text-white ${!r ? "text-slate-600" : ""} ${border}`}>
+                      {r ? (r === "like" ? <CheckCircle2 className="w-4 h-4" /> : <XIcon className="w-4 h-4" />) : <span className="text-xs font-semibold">{idx}</span>}
+                    </div>
+                    <div className="text-[10px] text-slate-500 mt-1">Q{idx}</div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Milestone labels under timeline */}
+          <div className="flex items-center justify-between text-xs text-slate-500 mt-3 px-2">
+            <div>Milestone 1 (3)</div>
+            <div>Milestone 2 (3)</div>
+            <div>Milestone 3 (2)</div>
+            <div>Milestone 4 (2)</div>
+          </div>
+        </div>
+
         {/* HEADER */}
-        <div className="flex-none pt-4 pb-2 z-20">
+        <div className="flex-none pt-2 pb-2 z-20">
             <div className="flex flex-col gap-3">
                 <div className="flex justify-between items-end px-1">
                     <div>
@@ -585,7 +696,7 @@ const SwipeQuizPage = () => {
         </div>
 
         {/* MAIN AREA */}
-        <div className="flex-1 relative flex items-center justify-center my-4">
+        <div className="flex-1 relative flex items-center justify-center my-3">
             
             <div className="relative w-full h-full max-h-[500px]">
                     {/* Background Icons */}
@@ -601,6 +712,27 @@ const SwipeQuizPage = () => {
                             </div>
                          </motion.div>
                     </div>
+
+                    {/* Swipe overlay icons (left/red, right/green) */}
+                    <motion.div
+                      style={{ opacity: rightOpacity }}
+                      className="absolute right-6 top-6 z-30"
+                    >
+                      <div className="flex items-center gap-2 bg-emerald-600 text-white px-3 py-2 rounded-full shadow-lg">
+                        <CheckCircle2 className="w-5 h-5" />
+                        <span className="text-xs font-semibold">Like</span>
+                      </div>
+                    </motion.div>
+
+                    <motion.div
+                      style={{ opacity: leftOpacity }}
+                      className="absolute left-6 top-6 z-30"
+                    >
+                      <div className="flex items-center gap-2 bg-rose-600 text-white px-3 py-2 rounded-full shadow-lg">
+                        <XIcon className="w-5 h-5" />
+                        <span className="text-xs font-semibold">Dislike</span>
+                      </div>
+                    </motion.div>
 
                     <AnimatePresence>
                         {cards.slice(currentCardIndex, currentCardIndex + 2).reverse().map((cardText, i) => {

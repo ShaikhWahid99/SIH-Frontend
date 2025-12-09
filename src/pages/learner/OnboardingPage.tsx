@@ -222,11 +222,11 @@ const OnboardingPage = () => {
                   onChange={(e) => updateField("ageRange", e.target.value)}
                 >
                   <option value="">Select Age</option>
-                  <option value="Under 18">Under 18</option>
+                  <option value="17">17</option>
                   <option value="18-25">18-25</option>
                   <option value="26-35">26-35</option>
-                  <option value="36-45">36-45</option>
-                  <option value="46+">46+</option>
+                  <option value="36-40">36-40</option>
+                  
                 </select>
               </div>
 
