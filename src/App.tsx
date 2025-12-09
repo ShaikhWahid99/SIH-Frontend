@@ -28,20 +28,14 @@ import NotFound from "./pages/NotFound";
 import SwipeQuizPage from "./pages/learner/SwipeQuizPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import OAuthSuccess from "./pages/auth/OAuthSuccess";
-import AdaptiveQuizPage from "./pages/learner/AdaptiveQuizPage";
 import RecommendedCoursesPage from "@/pages/learner/RecommendedCoursesPage";
 import SimilarCoursesPage from "@/pages/learner/SimilarCoursesPage";
 import SkillIndiaExplorer from "./pages/learner/SkillIndiaExplorer";
 
-// import data from "./roadmap-test/reactRoadmap.json";
-// import RoadmapFlow from "./roadmap-test/RoadmapFlow";
-import FlowDiagram from "@/roadmap-test/flow/FlowDiagram";
 import TrainerProtectedRoute from "./components/TrainerProtectedRoute";
-import TrainerLayout from "./layouts/TrainerLayout";
 import TrainerDashboard from "./pages/Trainer/TrainerDashboard";
 
 const queryClient = new QueryClient();
-
 
 const App: React.FC = () => (
   <QueryClientProvider client={queryClient}>
@@ -59,6 +53,7 @@ const App: React.FC = () => (
             <Route path="/auth/login" element={<AuthLayout><LoginPage /></AuthLayout>} />
             <Route path="/auth/register" element={<AuthLayout><RegisterPage /></AuthLayout>} />
             <Route path="/auth/trainer-login" element={<AuthLayout><TrainerLoginPage /></AuthLayout>} />
+            
             <Route
               path="/onboarding"
               element={
@@ -68,6 +63,7 @@ const App: React.FC = () => (
               }
             />
 
+            {/* MAIN QUIZ ROUTE - Now handles everything including generation */}
             <Route
               path="/quiz"
               element={
@@ -76,9 +72,6 @@ const App: React.FC = () => (
                 </ProtectedRoute>
               }
             />
-
-            <Route path="/adaptive-quiz" element={<AdaptiveQuizPage />} />
-
 
             {/* LEARNER DASHBOARD (both onboarding + quiz must be done) */}
             <Route
@@ -97,13 +90,10 @@ const App: React.FC = () => (
               path="/trainer/dashboard"
               element={
                 <TrainerProtectedRoute>
-                  {/* <TrainerLayout> */}
                     <TrainerDashboard />
-                  {/* </TrainerLayout> */}
                 </TrainerProtectedRoute>
               }
               />
-
 
             {/* ALL LEARNER ROUTES */}
             <Route
