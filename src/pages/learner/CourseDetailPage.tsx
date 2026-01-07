@@ -149,11 +149,7 @@ const CourseDetailPage = () => {
             ))}
           </ul>
         </Card>
-      ) : (
-        <Card className="p-6 bg-muted/30 border-dashed">
-          <p className="text-muted-foreground text-center italic">No specific learning outcomes listed for this module.</p>
-        </Card>
-      )}
+      ) : null}
 
       <div className="pt-4">
         <h2 className="text-2xl font-bold text-foreground mb-4 flex items-center gap-2">
@@ -205,8 +201,8 @@ const CourseDetailPage = () => {
       </div>
 
       <div className="flex gap-3 pt-4">
-        <Button size="lg" className="flex-1">Enroll Now</Button>
-        <Button size="lg" variant="outline">Add to Pathway</Button>
+        {/* <Button size="lg" className="flex-1" >Enroll Now</Button> */}
+        {/* <Button size="lg" variant="outline">Add to Pathway</Button> */}
       </div>
     </div>
   );

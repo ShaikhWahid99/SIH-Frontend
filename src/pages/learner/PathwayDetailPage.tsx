@@ -71,7 +71,7 @@ const PathwayDetailPage = () => {
 
   const [pathway, setPathway] = useState<Pathway | null>(null);
   // ✅ Merged state for view toggle
-  const [viewMode, setViewMode] = useState<'graph' | 'list'>('graph');
+  const [viewMode, setViewMode] = useState<'graph' | 'list'>('list');
 
   // ✅ Merged state for data
   const [graphData, setGraphData] = useState<MindmapNode | null>(null);

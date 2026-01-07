@@ -143,6 +143,10 @@ const SwipeQuizPage = () => {
     () => cards.length > 0 && ratings.every((r) => r !== null),
     [cards, ratings]
   );
+  const allAnswered = useMemo(
+    () => globalRatings.every((r) => r !== null),
+    [globalRatings]
+  );
 
   // --- RESULTS SUMMARY (from AdaptiveQuiz) ---
   const categoryColors: Record<string, string> = {
@@ -521,6 +525,13 @@ const SwipeQuizPage = () => {
 
   const handleFinalSubmit = async () => {
     const likes = Array.from(new Set([...savedLikes, ...liked]));
+    if (!allAnswered) {
+      toast({
+        title: "Complete the quiz",
+        description: "Please answer all questions before continuing.",
+      });
+      return;
+    }
     if (likes.length < 4) {
       setShowDescribeDialog(true);
       return;
@@ -710,7 +721,7 @@ const SwipeQuizPage = () => {
           <Button
             size="lg"
             onClick={handleFinalSubmit}
-            disabled={submitting}
+            disabled={submitting || !allAnswered}
             className="rounded-full px-8 py-6 text-lg shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all bg-[hsl(var(--primary)/0.9)] hover:bg-[hsl(var(--primary))] text-white"
           >
             {submitting ? (

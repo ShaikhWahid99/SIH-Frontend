@@ -13,7 +13,7 @@ import { useState } from 'react';
 
 const navItems = [
   { icon: Home, label: 'Dashboard', path: '/learner/dashboard' },
-  { icon: BookOpen, label: 'Pathways', path: '/learner/pathways' },
+  // { icon: BookOpen, label: 'Pathways', path: '/learner/pathways' },
   { icon: Layers, label: 'Alternate Pathways', path: '/learner/alternate-pathways' },
   // ✅ NEW ITEM ADDED HERE (Skill India Library)
   { 
