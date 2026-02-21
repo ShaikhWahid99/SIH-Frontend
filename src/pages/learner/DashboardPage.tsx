@@ -105,7 +105,6 @@ const DashboardPage = () => {
 
   return (
     <div className="space-y-8">
-
       {/* ✅ RECOMMENDED PATHWAY */}
       <div>
         <div className="flex items-center gap-2 mb-4">
@@ -132,16 +131,20 @@ const DashboardPage = () => {
 
         {recommendedPathway ? (
           <div className="mt-4 flex gap-3">
-            <Link to={`/learner/pathways/${recommendedPathway.id}`} className="flex-1">
+            <Link
+              to={`/learner/pathways/${recommendedPathway.id}`}
+              className="flex-1"
+            >
               <Button className="w-full" size="lg">
                 {uiText.startLearning}
               </Button>
             </Link>
             <Link to="/learner/alternate-pathways">
-                <Button variant="outline" size="lg"> {uiText.viewAll}
-                </Button>
+              <Button variant="outline" size="lg">
+                {" "}
+                {uiText.viewAll}
+              </Button>
             </Link>
-
           </div>
         ) : (
           <div className="mt-4 flex gap-3">
@@ -162,21 +165,19 @@ const DashboardPage = () => {
         </h2>
 
         <div className="grid md:grid-cols-2 gap-6">
-          {alternativePathways.length ? (
-            alternativePathways.map((pathway) => (
-              <PathwayCard key={pathway.id} {...pathway} />
-            ))
-          ) : (
-            [0, 1].map((i) => (
-              <Card key={i} className="p-6">
-                <div className="space-y-4">
-                  <Skeleton className="h-6 w-40" />
-                  <Skeleton className="h-4 w-24" />
-                  <Skeleton className="h-10 w-full" />
-                </div>
-              </Card>
-            ))
-          )}
+          {alternativePathways.length
+            ? alternativePathways.map((pathway) => (
+                <PathwayCard key={pathway.id} {...pathway} />
+              ))
+            : [0, 1].map((i) => (
+                <Card key={i} className="p-6">
+                  <div className="space-y-4">
+                    <Skeleton className="h-6 w-40" />
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-10 w-full" />
+                  </div>
+                </Card>
+              ))}
         </div>
       </div>
 
@@ -193,11 +194,11 @@ const DashboardPage = () => {
             </Button>
           </Link>
 
-          <Link to="/learner/progress">
+          {/* <Link to="/learner/progress">
             <Button variant="outline" className="w-full justify-start">
               {uiText.viewProgress}
             </Button>
-          </Link>
+          </Link> */}
 
           <Link to="/learner/feedback">
             <Button variant="outline" className="w-full justify-start">

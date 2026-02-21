@@ -198,9 +198,11 @@ const PathwayDetailPage = () => {
 
   return (
     <div className="space-y-6">
-
       {/* HEADER */}
-      <Link to="/learner/pathways" className="inline-flex items-center gap-2 text-muted-foreground hover:text-primary">
+      <Link
+        to="/learner/pathways"
+        className="inline-flex items-center gap-2 text-muted-foreground hover:text-primary"
+      >
         <ArrowLeft className="w-4 h-4" />
         {uiText.back}
       </Link>
@@ -228,7 +230,7 @@ const PathwayDetailPage = () => {
 
         <Card className="p-4">
           <Calendar className="w-4 h-4 inline" /> {uiText.validTill}
-          <p className="font-bold">{pathway.validTill || 'N/A'}</p>
+          <p className="font-bold">{pathway.validTill || "N/A"}</p>
         </Card>
       </div>
 
@@ -238,7 +240,11 @@ const PathwayDetailPage = () => {
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
             <div>
               <h2 className="text-xl font-bold flex items-center gap-2">
-                {viewMode === 'graph' ? <GitGraph className="w-5 h-5" /> : <List className="w-5 h-5" />}
+                {viewMode === "graph" ? (
+                  <GitGraph className="w-5 h-5" />
+                ) : (
+                  <List className="w-5 h-5" />
+                )}
                 {uiText.moduleMap}
               </h2>
               <p className="text-sm text-muted-foreground">{uiText.explore}</p>
@@ -246,27 +252,27 @@ const PathwayDetailPage = () => {
 
             {/* ✅ VIEW TOGGLE BUTTONS */}
             <div className="bg-muted p-1 rounded-lg flex gap-1">
-               <Button
-                 variant={viewMode === 'graph' ? 'secondary' : 'ghost'}
-                 size="sm"
-                 onClick={() => setViewMode('graph')}
-                 className="gap-2"
-               >
-                 <GitGraph className="w-4 h-4" /> Graph
-               </Button>
-               <Button
-                 variant={viewMode === 'list' ? 'secondary' : 'ghost'}
-                 size="sm"
-                 onClick={() => setViewMode('list')}
-                 className="gap-2"
-               >
-                 <List className="w-4 h-4" /> List
-               </Button>
+              <Button
+                variant={viewMode === "graph" ? "secondary" : "ghost"}
+                size="sm"
+                onClick={() => setViewMode("graph")}
+                className="gap-2"
+              >
+                <GitGraph className="w-4 h-4" /> Graph
+              </Button>
+              <Button
+                variant={viewMode === "list" ? "secondary" : "ghost"}
+                size="sm"
+                onClick={() => setViewMode("list")}
+                className="gap-2"
+              >
+                <List className="w-4 h-4" /> List
+              </Button>
             </div>
           </div>
 
           <div className="mt-4 transition-all duration-300">
-            {viewMode === 'graph' ? (
+            {viewMode === "graph" ? (
               <div className="h-[600px] border rounded-xl overflow-hidden bg-slate-50">
                 <Mindmap data={graphData} width={1000} height={600} />
               </div>
@@ -294,33 +300,33 @@ const PathwayDetailPage = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {skillIndiaCourses.map((course) => (
-              <CourseCard
-                key={course.id}
-                {...course}
-                isExternal={true}
-              />
+              <CourseCard key={course.id} {...course} isExternal={true} />
             ))}
           </div>
 
           {/* ✅ VIEW MORE BUTTON */}
           <div className="flex justify-center pt-4">
             <Link to="/learner/skill-india">
-              <Button variant="outline" className="gap-2 border-orange-200 text-orange-600 hover:text-orange-700 hover:bg-orange-50">
-                Explore All Skill India Courses <ArrowRight className="w-4 h-4" />
+              <Button
+                variant="outline"
+                className="gap-2 border-orange-200 text-orange-600 hover:text-orange-700 hover:bg-orange-50"
+              >
+                Explore All Skill India Courses{" "}
+                <ArrowRight className="w-4 h-4" />
               </Button>
             </Link>
           </div>
         </div>
       )}
 
-      {/* PROGRESS */}
+      {/* PROGRESS
       <Card className="p-6">
         <h2 className="text-xl font-bold">{uiText.yourProgress}</h2>
         <ProgressBar value={progress} label={`${completedSteps} ${uiText.stepsCompleted}`} />
-      </Card>
+      </Card> */}
 
       {/* JOB OPPORTUNITIES */}
-      <Card className="p-6">
+      {/* <Card className="p-6">
         <h2 className="text-xl font-bold mb-4">{uiText.jobOpportunities}</h2>
         {pathway.jobOpportunities?.map((job, i) => (
           <Badge key={i} className="mr-2">{job}</Badge>
@@ -328,7 +334,7 @@ const PathwayDetailPage = () => {
         <p className="mt-4">
           {uiText.skillDemand}: <b>{pathway.skillDemand}</b>
         </p>
-      </Card>
+      </Card> */}
     </div>
   );
 };

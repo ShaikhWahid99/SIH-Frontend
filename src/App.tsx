@@ -46,14 +46,49 @@ const App: React.FC = () => (
         <BrowserRouter>
           <Routes>
             {/* PUBLIC PAGES */}
-            <Route path="/" element={<MainLayout><LandingPage /></MainLayout>} />
-            <Route path="/about" element={<MainLayout><AboutPage /></MainLayout>} />
+            <Route
+              path="/"
+              element={
+                <MainLayout>
+                  <LandingPage />
+                </MainLayout>
+              }
+            />
+            <Route
+              path="/about"
+              element={
+                <MainLayout>
+                  <AboutPage />
+                </MainLayout>
+              }
+            />
 
             {/* AUTH PAGES */}
-            <Route path="/auth/login" element={<AuthLayout><LoginPage /></AuthLayout>} />
-            <Route path="/auth/register" element={<AuthLayout><RegisterPage /></AuthLayout>} />
-            <Route path="/auth/trainer-login" element={<AuthLayout><TrainerLoginPage /></AuthLayout>} />
-            
+            <Route
+              path="/auth/login"
+              element={
+                <AuthLayout>
+                  <LoginPage />
+                </AuthLayout>
+              }
+            />
+            <Route
+              path="/auth/register"
+              element={
+                <AuthLayout>
+                  <RegisterPage />
+                </AuthLayout>
+              }
+            />
+            <Route
+              path="/auth/trainer-login"
+              element={
+                <AuthLayout>
+                  <TrainerLoginPage />
+                </AuthLayout>
+              }
+            />
+
             <Route
               path="/onboarding"
               element={
@@ -86,21 +121,23 @@ const App: React.FC = () => (
             />
 
             {/* TRAINER */}
-              <Route 
+            <Route
               path="/trainer/dashboard"
               element={
                 <TrainerProtectedRoute>
-                    <TrainerDashboard />
+                  <TrainerDashboard />
                 </TrainerProtectedRoute>
               }
-              />
+            />
 
             {/* ALL LEARNER ROUTES */}
             <Route
               path="/learner/pathways"
               element={
                 <ProtectedRoute requireOnboarded={true} requireQuiz={true}>
-                  <LearnerLayout><PathwayListPage /></LearnerLayout>
+                  <LearnerLayout>
+                    <PathwayListPage />
+                  </LearnerLayout>
                 </ProtectedRoute>
               }
             />
@@ -109,7 +146,9 @@ const App: React.FC = () => (
               path="/learner/pathways/:id"
               element={
                 <ProtectedRoute requireOnboarded={true} requireQuiz={true}>
-                  <LearnerLayout><PathwayDetailPage /></LearnerLayout>
+                  <LearnerLayout>
+                    <PathwayDetailPage />
+                  </LearnerLayout>
                 </ProtectedRoute>
               }
             />
@@ -118,7 +157,9 @@ const App: React.FC = () => (
               path="/learner/courses/:id"
               element={
                 <ProtectedRoute requireOnboarded={true} requireQuiz={true}>
-                  <LearnerLayout><CourseDetailPage /></LearnerLayout>
+                  <LearnerLayout>
+                    <CourseDetailPage />
+                  </LearnerLayout>
                 </ProtectedRoute>
               }
             />
@@ -127,25 +168,29 @@ const App: React.FC = () => (
               path="/learner/profile"
               element={
                 <ProtectedRoute requireOnboarded={true} requireQuiz={true}>
-                  <LearnerLayout><ProfilePage /></LearnerLayout>
+                  <LearnerLayout>
+                    <ProfilePage />
+                  </LearnerLayout>
                 </ProtectedRoute>
               }
             />
 
-            <Route
+            {/* <Route
               path="/learner/progress"
               element={
                 <ProtectedRoute requireOnboarded={true} requireQuiz={true}>
                   <LearnerLayout><ProgressPage /></LearnerLayout>
                 </ProtectedRoute>
               }
-            />
+            /> */}
 
             <Route
               path="/learner/feedback"
               element={
                 <ProtectedRoute requireOnboarded={true} requireQuiz={true}>
-                  <LearnerLayout><FeedbackPage /></LearnerLayout>
+                  <LearnerLayout>
+                    <FeedbackPage />
+                  </LearnerLayout>
                 </ProtectedRoute>
               }
             />

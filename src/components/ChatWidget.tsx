@@ -94,10 +94,6 @@ export default function ChatWidget() {
     
     setInput("");
     setLoading(true);
-    
-    // Add a temporary "..." loading message for better UI feedback
-    const loadingMessage: ChatMessage = { role: "assistant", content: "..." };
-    setMessages((m) => [...m, loadingMessage]);
 
 
     try {
@@ -105,21 +101,17 @@ export default function ChatWidget() {
       setThreadId(res.thread_id);
       const text = (res as any).reply ?? pickText((res as any).data);
       
-      // Replace the "..." loading message with the actual response
-      setMessages((m) => {
-          const newMessages = [...m];
-          newMessages[newMessages.length - 1] = { role: "assistant", content: text || "No response received." };
-          return newMessages;
-      });
+      setMessages((m) => [
+        ...m,
+        { role: "assistant", content: text || "No response received." },
+      ]);
 
     } catch (e: any) {
       const msg = e?.message || "An error occurred while fetching the response.";
-       // Replace the "..." loading message with the error
-      setMessages((m) => {
-          const newMessages = [...m];
-          newMessages[newMessages.length - 1] = { role: "assistant", content: msg };
-          return newMessages;
-      });
+      setMessages((m) => [
+        ...m,
+        { role: "assistant", content: msg },
+      ]);
     } finally {
       setLoading(false);
     }
@@ -144,55 +136,57 @@ export default function ChatWidget() {
       <Dialog open={open} onOpenChange={setOpen}>
         {/* 2. Optimized Dialog Size for Better Desktop/Mobile Fit */}
         <DialogContent className="sm:max-w-[450px] h-[70vh] max-h-[600px] flex flex-col p-0">
-          
           {/* 3. Improved Dialog Header */}
           <DialogHeader className="p-4 border-b bg-muted/30">
             <DialogTitle className="flex items-center gap-2 text-lg font-semibold text-primary">
-              <Bot className="w-6 h-6 animate-pulse" /> 
-              AI Assistant
+              <Bot className="w-6 h-6 animate-pulse" />
+              Bot Assistant
             </DialogTitle>
           </DialogHeader>
 
           <div className="flex flex-col flex-grow overflow-hidden">
-            
             {/* 4. Chat Messages Area */}
             <ScrollArea className="flex-grow p-4">
-              <div ref={listRef} className="space-y-4"> {/* Increased space-y for better separation */}
+              <div ref={listRef} className="space-y-4">
+                {" "}
+                {/* Increased space-y for better separation */}
                 {messages.map((m, i) => (
-                   // Use the new MessageBubble component
-                   <MessageBubble key={i} message={m} />
+                  // Use the new MessageBubble component
+                  <MessageBubble key={i} message={m} />
                 ))}
-
-                 {/* 5. Live Loading Indicator (Typing Bubble) */}
-                 {loading && messages[messages.length - 1]?.content === "..." && (
-                    <div className="flex justify-start space-x-2">
-                      <div className="flex-shrink-0 w-8 h-8 rounded-full bg-muted flex items-center justify-center border">
-                          <Bot className="w-4 h-4 text-primary" />
-                      </div>
-                      <div className="max-w-xs sm:max-w-sm lg:max-w-md p-3 rounded-xl bg-background text-foreground rounded-tl-none border">
-                          <div className="flex space-x-1">
-                              <span className="animate-pulse w-2 h-2 bg-gray-500 rounded-full"></span>
-                              <span className="animate-pulse delay-100 w-2 h-2 bg-gray-500 rounded-full"></span>
-                              <span className="animate-pulse delay-200 w-2 h-2 bg-gray-500 rounded-full"></span>
-                          </div>
+                {loading && (
+                  <div className="flex justify-start space-x-2">
+                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-muted flex items-center justify-center border">
+                      <Bot className="w-4 h-4 text-primary" />
+                    </div>
+                    <div className="max-w-xs sm:max-w-sm lg:max-w-md p-3 rounded-xl bg-background text-foreground rounded-tl-none border">
+                      <div className="flex space-x-1">
+                        <span className="animate-pulse w-2 h-2 bg-gray-500 rounded-full"></span>
+                        <span className="animate-pulse delay-100 w-2 h-2 bg-gray-500 rounded-full"></span>
+                        <span className="animate-pulse delay-200 w-2 h-2 bg-gray-500 rounded-full"></span>
                       </div>
                     </div>
-                 )}
+                  </div>
+                )}
               </div>
             </ScrollArea>
-            
+
             {/* 6. Input Area */}
             <div className="p-4 border-t bg-muted/30">
               <div className="flex gap-2">
                 <Input
-                  placeholder={loading ? "Waiting for response..." : "Ask your question..."}
+                  placeholder={
+                    loading ? "Waiting for response..." : "Ask your question..."
+                  }
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={onKey}
                   disabled={loading}
                   className="flex-grow"
                 />
-                <Button onClick={send} disabled={loading} className="px-3"> {/* Made button slightly smaller */}
+                <Button onClick={send} disabled={loading} className="px-3">
+                  {" "}
+                  {/* Made button slightly smaller */}
                   {loading ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
                   ) : (

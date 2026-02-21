@@ -233,10 +233,9 @@ const RecommendedCoursesPage = () => {
     }, []);
 
     return (
-        <div className="space-y-8">
-
-            {/* Header Card with right-aligned button */}
-            <Card className="p-8 bg-gradient-to-r from-primary to-secondary text-white">
+      <div className="space-y-8">
+        {/* Header Card with right-aligned button */}
+        {/* <Card className="p-8 bg-gradient-to-r from-primary to-secondary text-white">
                 <div className="flex justify-between items-center">
                     <div>
                         <div className="flex items-center gap-3">
@@ -258,31 +257,28 @@ const RecommendedCoursesPage = () => {
                         </Button>
                     </Link>
                 </div>
-            </Card>
+            </Card> */}
 
-            {/* Courses Grid */}
-            <div className="grid md:grid-cols-2 gap-6">
-                {loading ? (
-                    Array.from({ length: 7 }).map((_, i) => (
-                        <Card key={i} className="p-6">
-                            <div className="space-y-4">
-                                <div className="flex items-center justify-between mb-2">
-                                    <Skeleton className="h-6 w-40" />
-                                    <Skeleton className="h-4 w-20" />
-                                </div>
-                                <Skeleton className="h-4 w-24" />
-                                <Skeleton className="h-10 w-full" />
-                            </div>
-                        </Card>
-                    ))
-                ) : (
-                    items.map((course) => (
-                        <PathwayCard key={course.id} {...course} />
-                    ))
-                )}
-            </div>
-
+        {/* Courses Grid */}
+        <div className="grid md:grid-cols-2 gap-6">
+          {loading
+            ? Array.from({ length: 7 }).map((_, i) => (
+                <Card key={i} className="p-6">
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <Skeleton className="h-6 w-40" />
+                      <Skeleton className="h-4 w-20" />
+                    </div>
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-10 w-full" />
+                  </div>
+                </Card>
+              ))
+            : items.map((course) => (
+                <PathwayCard key={course.id} {...course} />
+              ))}
         </div>
+      </div>
     );
 };
 
