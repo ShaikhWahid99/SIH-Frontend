@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -106,7 +106,10 @@ const SwipeQuizPage = () => {
   const [globalRatings, setGlobalRatings] = useState<Rating[]>(() =>
     Array(TIMELINE_TOTAL).fill(null)
   );
-  const [answeredCount, setAnsweredCount] = useState<number>(0); // how many questions answered globally
+  const [answeredCount, setAnsweredCount] = useState<number>(0);
+  const interactionLockedRef = useRef(false);
+  const [interactionLocked, setInteractionLocked] = useState(false);
+  const [cardLoading, setCardLoading] = useState(false);
 
   // --- RESULTS STATE ---
   const [showResults, setShowResults] = useState(false);
@@ -407,6 +410,9 @@ const SwipeQuizPage = () => {
 
   // --- LOGIC: CARD INTERACTIONS ---
   const handleRate = async (index: number, value: Exclude<Rating, null>) => {
+    if (interactionLockedRef.current || index >= cards.length) return;
+    interactionLockedRef.current = true;
+    setInteractionLocked(true);
     // Animation for button clicks / snap away
     if (x.get() === 0) {
       await controls.start({
@@ -441,15 +447,6 @@ const SwipeQuizPage = () => {
     // increment answeredCount if we filled a previously empty slot
     setAnsweredCount((prev) => {
       const newCount = prev < TIMELINE_TOTAL ? prev + 1 : prev;
-      // check milestone thresholds and toast if matches
-      if (MILESTONE_THRESHOLDS.includes(newCount)) {
-        const milestoneIndex = MILESTONE_THRESHOLDS.indexOf(newCount) + 1; // 1..4
-        const msg = MOTIVATION[Math.floor(Math.random() * MOTIVATION.length)];
-        toast({
-          title: `Milestone ${milestoneIndex} Completed!`,
-          description: msg,
-        });
-      }
       return newCount;
     });
 
@@ -470,13 +467,8 @@ const SwipeQuizPage = () => {
         setCurrentCardIndex(index + 1);
         x.set(0);
         controls.set({ x: 0, y: 0, scale: 1, rotate: 0, opacity: 1 });
-      } else {
-        // if this batch finished, trigger goNext logic which will load next batch
-        // note: goNext checks allRated; ratings updated above so allRated may become true
-        // small timeout to allow ratings state to update then call goNext
-        setTimeout(() => {
-          if (allRated) goNext();
-        }, 150);
+        interactionLockedRef.current = false;
+        setInteractionLocked(false);
       }
     }, 120);
   };
@@ -505,6 +497,8 @@ const SwipeQuizPage = () => {
   const goNext = async () => {
     // only proceed when the current batch's cards have been rated
     if (!allRated || submitting) return;
+    interactionLockedRef.current = true;
+    setInteractionLocked(true);
     const likedBatch = cards.filter((_, i) => ratings[i] === "like");
     const nextLiked = [...liked, ...likedBatch];
 
@@ -520,8 +514,31 @@ const SwipeQuizPage = () => {
 
     setLiked(nextLiked);
     setBatchesCompleted((n) => n + 1);
+    setCardLoading(true);
     await loadBatch(nextStage, nextLiked, []);
+    interactionLockedRef.current = false;
+    setInteractionLocked(false);
+    setCardLoading(false);
   };
+
+  useEffect(() => {
+    if (!answeredCount) return;
+    if (MILESTONE_THRESHOLDS.includes(answeredCount)) {
+      const milestoneIndex = MILESTONE_THRESHOLDS.indexOf(answeredCount) + 1;
+      const msg = MOTIVATION[Math.floor(Math.random() * MOTIVATION.length)];
+      toast({
+        title: `Milestone ${milestoneIndex} Completed!`,
+        description: msg,
+      });
+    }
+  }, [answeredCount, toast]);
+
+  useEffect(() => {
+    if (!cards.length) return;
+    if (currentCardIndex > cards.length - 1) {
+      setCurrentCardIndex(cards.length - 1);
+    }
+  }, [cards.length, currentCardIndex]);
 
   const handleFinalSubmit = async () => {
     const likes = Array.from(new Set([...savedLikes, ...liked]));
@@ -865,10 +882,8 @@ const SwipeQuizPage = () => {
           </div>
         </div>
 
-        {/* MAIN AREA */}
         <div className="flex-1 relative flex items-center justify-center my-3">
           <div className="relative w-full h-full max-h-[500px]">
-            {/* Background Icons */}
             <div className="absolute inset-0 flex items-center justify-between pointer-events-none z-0 px-4">
               <motion.div
                 style={{
@@ -896,7 +911,6 @@ const SwipeQuizPage = () => {
               </motion.div>
             </div>
 
-            {/* Swipe overlay icons (left/red, right/green) */}
             <motion.div
               style={{ opacity: rightOpacity }}
               className="absolute right-6 top-6 z-30"
@@ -916,6 +930,14 @@ const SwipeQuizPage = () => {
                 <span className="text-xs font-semibold">Disagree</span>
               </div>
             </motion.div>
+
+            {cardLoading && (
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ zIndex: 5 }}>
+                <span className="px-4 py-2 rounded-full bg-white/70 text-xs font-medium text-slate-500">
+                  Loading next questions...
+                </span>
+              </div>
+            )}
 
             <AnimatePresence>
               {cards
@@ -991,7 +1013,7 @@ const SwipeQuizPage = () => {
             variant="outline"
             className="w-14 h-14 rounded-full border-2 border-rose-100 bg-white text-rose-500 hover:bg-rose-50 hover:border-rose-200 shadow-sm transition-transform active:scale-95"
             onClick={() => handleRate(currentCardIndex, "dislike")}
-            disabled={currentCardIndex >= cards.length}
+            disabled={currentCardIndex >= cards.length || interactionLocked}
           >
             <Trash2 className="w-6 h-6" />
           </Button>
@@ -1014,7 +1036,7 @@ const SwipeQuizPage = () => {
             variant="outline"
             className="w-14 h-14 rounded-full border-2 border-emerald-100 bg-white text-emerald-500 hover:bg-emerald-50 hover:border-emerald-200 shadow-sm transition-transform active:scale-95"
             onClick={() => handleRate(currentCardIndex, "like")}
-            disabled={currentCardIndex >= cards.length}
+            disabled={currentCardIndex >= cards.length || interactionLocked}
           >
             <CheckCircle2 className="w-7 h-7" />
           </Button>
