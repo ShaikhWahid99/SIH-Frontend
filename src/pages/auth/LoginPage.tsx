@@ -10,8 +10,8 @@ import { FcGoogle } from "react-icons/fc";
 
 
 const LoginPage = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("demo@g.com");
+  const [password, setPassword] = useState("123456");
   const [loading, setLoading] = useState(false);
 
   // ✅ LANGUAGE STATE

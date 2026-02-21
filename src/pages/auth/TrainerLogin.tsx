@@ -16,37 +16,37 @@ import {
 
 // SECTORS
 const sectors = [
+  "Aerospace & Aviation",
+  "Agriculture",
+  "Automotive",
+  "BFSI",
+  "Capital Goods & Manufacturing",
+  "Construction",
+  "Education, Training & Research",
+  "Electronics & HW",
+  "Environmental Science",
+  "Food Industry",
+  "Handicrafts & Carpets",
+  "Home Management and Caregiving",
   "Hydrocarbon",
   "IT-ITeS",
   "Infrastructure",
-  "Automotive",
-  "Persons with Disability",
-  "Electronics & HW",
+  "Iron & Steel",
   "Media & Entertainment",
+  "Office Administration & Facility Management",
+  "Paints & Coatings",
+  "Persons with Disability",
   "Plumbing",
   "Private Security",
-  "Paints & Coatings",
-  "Construction",
-  "Office Administration & Facility Management",
-  "Education, Training & Research",
-  "Transportation, Logistics & Warehousing",
-  "Aerospace & Aviation",
-  "Home Management and Caregiving",
-  "Tourism & Hospitality",
-  "Environmental Science",
-  "Handicrafts & Carpets",
-  "Agriculture",
-  "Food Industry",
-  "Capital Goods & Manufacturing",
   "Rubber Industry",
-  "BFSI",
-  "Iron & Steel",
+  "Tourism & Hospitality",
+  "Transportation, Logistics & Warehousing",
 ];
 
 const TrainerLoginPage = () => {
-  const [sector, setSector] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [sector, setSector] = useState("Automotive");
+  const [email, setEmail] = useState("trainer@eg.com");
+  const [password, setPassword] = useState("123456");
   const [loading, setLoading] = useState(false);
 
   const { toast } = useToast();
