@@ -131,7 +131,7 @@ const App: React.FC = () => (
             />
 
             {/* ALL LEARNER ROUTES */}
-            <Route
+            {/* <Route
               path="/learner/pathways"
               element={
                 <ProtectedRoute requireOnboarded={true} requireQuiz={true}>
@@ -140,7 +140,7 @@ const App: React.FC = () => (
                   </LearnerLayout>
                 </ProtectedRoute>
               }
-            />
+            /> */}
 
             <Route
               path="/learner/pathways/:id"
@@ -206,7 +206,7 @@ const App: React.FC = () => (
               }
             />
 
-            <Route
+            {/* <Route
               path="/learner/similar-courses-page"
               element={
                 <ProtectedRoute requireOnboarded={true} requireQuiz={true}>
@@ -215,7 +215,7 @@ const App: React.FC = () => (
                   </LearnerLayout>
                 </ProtectedRoute>
               }
-            />
+            /> */}
 
             <Route
               path="/learner/skill-india"

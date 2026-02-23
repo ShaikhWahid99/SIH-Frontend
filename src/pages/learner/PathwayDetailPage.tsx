@@ -185,7 +185,7 @@ const PathwayDetailPage = () => {
     return (
       <div className="text-center py-12">
         <h2 className="text-2xl font-bold">{uiText.notFound}</h2>
-        <Link to="/learner/pathways">
+        <Link to="/learner/dashboard">
           <Button>{uiText.back}</Button>
         </Link>
       </div>
@@ -200,7 +200,7 @@ const PathwayDetailPage = () => {
     <div className="space-y-6">
       {/* HEADER */}
       <Link
-        to="/learner/pathways"
+        to="/learner/dashboard"
         className="inline-flex items-center gap-2 text-muted-foreground hover:text-primary"
       >
         <ArrowLeft className="w-4 h-4" />
