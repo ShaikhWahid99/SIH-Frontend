@@ -9,18 +9,16 @@ export default defineConfig(({ mode }) => ({
     host: "::",
     port: 8080,
   },
-  plugins: [
-    react(),
-    mode === 'development' &&
-    componentTagger(),
-  ].filter(Boolean),
+  plugins: [react(), mode === "development" && componentTagger()].filter(
+    Boolean,
+  ),
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
-    proxy:{
-      '/api':'http://localhost:5000',
-      '/auth': 'http://localhost:5000'
-    }
+    proxy: {
+      "/api": "https://sih-backend-iqfv.onrender.com",
+      "/auth": "https://sih-backend-iqfv.onrender.com",
+    },
   },
 }));

@@ -5,11 +5,11 @@ export async function translateText(text, targetLang) {
 
   try {
     const res = await axios.post(
-      "http://localhost:5000/api/translate",
+      "https://sih-backend-iqfv.onrender.com/api/translate",
       {
         text,
         targetLang,
-      }
+      },
     );
 
     console.log("🟢 Result:", res.data.translatedText);
